@@ -27,7 +27,15 @@ npm run build   # typecheck + production bundle
 npm run tauri build   # -> src-tauri/target/release/bundle/nsis/BlinkBreak_*_setup.exe
 ```
 
-Native shell (`src-tauri/src/lib.rs`): single instance, tray menu, `get_idle_secs` via Win32 `GetLastInputInfo`, focus-free reminder window, autostart plugin.
+Native shell (`src-tauri/src/lib.rs`): single instance, tray menu, `get_idle_secs` via Win32 `GetLastInputInfo`, focus-free reminder window, login autostart.
+
+## Start with Windows (works when you open your laptop)
+
+1. Install the app and open **Settings → Start with Windows** (on by default).
+2. On sign-in, BlinkBreak launches **minimized to the system tray** — no dashboard popup.
+3. The tray menu offers **Open dashboard**, **Take a break now**, **Pause 15 min**, and **Quit**. Closing the dashboard hides it back to the tray; only Quit exits.
+
+> The toggle writes a per-user login entry (Windows Run key) pointing at the installed app with a `--minimized` flag. Unchecking it removes the entry.
 
 ## Privacy
 

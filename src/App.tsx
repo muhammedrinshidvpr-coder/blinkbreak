@@ -2,7 +2,17 @@ import { useEffect, useMemo, useRef, useState } from 'react';
 import './index.css';
 import { DEFAULT_SETTINGS, cloneSettings, sanitizeSettings, type AppSettings, type DayStats, type ReminderKind } from './lib/types';
 import { createSchedulerState, tick, applyAction, nextDueInSec, isPaused, type SchedulerState } from './lib/scheduler';
+import { classifyActivity } from './lib/activity';
+import {
+  getAutostartEnabled,
+  getIdleSeconds,
+  getWindowLabel,
+  isTauriRuntime,
+  listen,
+  showNativeReminder,
+} from './lib/native';
 import { ReminderCard, type CardAction } from './components/ReminderCard';
+import { NativeReminder } from './components/NativeReminder';
 import { Dashboard } from './components/Dashboard';
 import { SettingsPanel } from './components/SettingsPanel';
 import { BlinkEye } from './components/cartoon/BlinkEye';
@@ -41,7 +51,21 @@ export default function App() {
   });
   const [activeReminder, setActiveReminder] = useState<{ kind: ReminderKind } | null>(null);
   const [tab, setTab] = useState<'today' | 'gallery' | 'settings'>('today');
+  const [windowLabel, setWindowLabel] = useState('main');
   const schedRef = useRef<SchedulerState>(createSchedulerState());
+  const activeReminderRef = useRef(activeReminder);
+
+  useEffect(() => {
+    activeReminderRef.current = activeReminder;
+  }, [activeReminder]);
+
+  useEffect(() => {
+    void getWindowLabel().then(setWindowLabel);
+    // Trust the OS as source of truth for login autostart (user may change it outside the app).
+    void getAutostartEnabled().then((enabled) => {
+      if (enabled !== null) setSettings((s) => (s.autostart === enabled ? s : { ...s, autostart: enabled }));
+    });
+  }, []);
 
   useEffect(() => {
     localStorage.setItem(SETTINGS_KEY, JSON.stringify(settings));
@@ -50,19 +74,78 @@ export default function App() {
     localStorage.setItem(STATS_KEY, JSON.stringify(stats));
   }, [stats]);
 
-  // Demo engine: in the desktop app Rust feeds real active seconds.
-  // In the browser preview we simulate 1 active second per real second.
   useEffect(() => {
-    const id = setInterval(() => {
-      setStats((prev) => ({ ...prev, activeSec: prev.activeSec + 1 }));
-      const ev = tick(schedRef.current, settings, Date.now(), 1);
-      if (ev && !activeReminder) {
-        setActiveReminder({ kind: ev.kind });
-        setStats((prev) => ({ ...prev, shown: { ...prev.shown, [ev.kind]: (prev.shown[ev.kind] ?? 0) + 1 } }));
+    if (windowLabel !== 'main') return;
+    let unsubscribe: (() => void) | undefined;
+    void listen<{ kind: ReminderKind; action: CardAction }>('blinkbreak:reminder-action', ({ kind, action }) => {
+      applyAction(schedRef.current, settings, kind, action);
+      setStats((prev) => {
+        const key = action === 'done' ? 'completed' : action === 'skip' ? 'skipped' : 'snoozed';
+        return { ...prev, [key]: { ...prev[key], [kind]: (prev[key][kind] ?? 0) + 1 } };
+      });
+    }).then((cleanup) => { unsubscribe = cleanup; });
+    return () => unsubscribe?.();
+  }, [settings, windowLabel]);
+
+  // Tray menu actions from Rust (work even while the dashboard is hidden).
+  useEffect(() => {
+    if (windowLabel !== 'main') return;
+    let offPause: (() => void) | undefined;
+    let offBreak: (() => void) | undefined;
+    void listen('blinkbreak:pause-15', () => {
+      setSettings((s) => ({ ...s, pauseUntilMs: Date.now() + 15 * 60_000 }));
+    }).then((cleanup) => { offPause = cleanup; });
+    void listen('blinkbreak:break-now', () => {
+      handleBreakNowRef.current();
+    }).then((cleanup) => { offBreak = cleanup; });
+    return () => { offPause?.(); offBreak?.(); };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [windowLabel]);
+
+  // Tauri supplies real Windows idle time. Browser preview mode uses one
+  // active second per wall-clock second so the complete flow stays testable.
+  useEffect(() => {
+    if (windowLabel !== 'main') return;
+    let previous: { atMs: number; idleMs: number } | null = null;
+    let running = false;
+    const poll = async () => {
+      if (running) return;
+      running = true;
+      const now = Date.now();
+      const idleSeconds = await getIdleSeconds();
+      const sample = { atMs: now, idleMs: (idleSeconds ?? 0) * 1000 };
+      const activity = idleSeconds === null
+        ? { activeSec: 1, sleepGap: false }
+        : classifyActivity(previous, sample, settings.idleThresholdSec);
+      previous = sample;
+      if (activity.sleepGap || activity.activeSec <= 0) {
+        running = false;
+        return;
       }
-    }, 1000);
-    return () => clearInterval(id);
-  }, [settings, activeReminder]);
+      setStats((prev) => ({ ...prev, activeSec: prev.activeSec + activity.activeSec }));
+      const ev = tick(schedRef.current, settings, now, activity.activeSec);
+      if (ev && !activeReminderRef.current) {
+        const showLocal = () => {
+          setActiveReminder({ kind: ev.kind });
+          setStats((prev) => ({ ...prev, shown: { ...prev.shown, [ev.kind]: (prev.shown[ev.kind] ?? 0) + 1 } }));
+        };
+        if (isTauriRuntime()) {
+          try {
+            await showNativeReminder({ kind: ev.kind, title: ev.title, body: ev.body });
+            setStats((prev) => ({ ...prev, shown: { ...prev.shown, [ev.kind]: (prev.shown[ev.kind] ?? 0) + 1 } }));
+          } catch {
+            showLocal();
+          }
+        } else {
+          showLocal();
+        }
+      }
+      running = false;
+    };
+    const id = window.setInterval(() => void poll(), 1000);
+    void poll();
+    return () => window.clearInterval(id);
+  }, [settings, windowLabel]);
 
   const nextIn = useMemo(
     () => nextDueInSec(schedRef.current, settings, Date.now()),
@@ -81,7 +164,19 @@ export default function App() {
     setActiveReminder(null);
   };
 
+  const handleBreakNow = () => {
+    const kind: ReminderKind = 'lookaway';
+    setActiveReminder({ kind });
+    setStats((prev) => ({ ...prev, shown: { ...prev.shown, [kind]: (prev.shown[kind] ?? 0) + 1 } }));
+  };
+  const handleBreakNowRef = useRef(handleBreakNow);
+  useEffect(() => {
+    handleBreakNowRef.current = handleBreakNow;
+  });
+
   const paused = isPaused(settings, Date.now());
+
+  if (windowLabel === 'reminder') return <NativeReminder reducedMotion={settings.reducedMotion} />;
 
   return (
     <div className="bb-shell">
@@ -100,7 +195,7 @@ export default function App() {
       </nav>
 
       {activeReminder && (
-        <div style={{ marginTop: 16 }}>
+        <div className="bb-reminder-overlay">
           <ReminderCard
             kind={activeReminder.kind}
             title={{ blink: 'Time to blink', lookaway: 'Look far away', posture: 'Posture reset', move: 'Move & stretch', rest: 'Take a longer rest' }[activeReminder.kind]}
@@ -119,10 +214,7 @@ export default function App() {
             nextInSec={nextIn}
             paused={paused}
             stats={stats}
-            onBreakNow={() => {
-              setActiveReminder({ kind: 'lookaway' });
-              setStats((prev) => ({ ...prev, shown: { ...prev.shown, lookaway: (prev.shown.lookaway ?? 0) + 1 } }));
-            }}
+            onBreakNow={handleBreakNow}
             onPause={(min) => setSettings((s) => ({ ...s, pauseUntilMs: Date.now() + min * 60_000 }))}
             onResume={() => setSettings((s) => ({ ...s, pauseUntilMs: null }))}
           />

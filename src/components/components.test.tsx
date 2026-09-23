@@ -7,6 +7,7 @@ import { BlinkEye } from './cartoon/BlinkEye';
 import { LookAway } from './cartoon/LookAway';
 import { PostureReset } from './cartoon/PostureReset';
 import { MoveStretch } from './cartoon/MoveStretch';
+import { NativeReminder } from './NativeReminder';
 import { DEFAULT_SETTINGS, cloneSettings } from '../lib/types';
 
 describe('cartoon visuals', () => {
@@ -52,6 +53,14 @@ describe('ReminderCard', () => {
   });
 });
 
+describe('NativeReminder', () => {
+  it('renders a safe fallback card before the native event arrives', () => {
+    render(<NativeReminder reducedMotion />);
+    expect(screen.getByRole('alertdialog', { name: 'Blink, friend' })).toBeInTheDocument();
+    expect(screen.getByText('Relax your face and blink slowly.')).toBeInTheDocument();
+  });
+});
+
 describe('Dashboard', () => {
   it('pause/resume buttons work', () => {
     const onPause = vi.fn();
@@ -80,5 +89,17 @@ describe('SettingsPanel', () => {
     fireEvent.change(screen.getByTestId('settings-interval-blink'), { target: { value: '10' } });
     const updated = onChange.mock.calls.map((c) => c[0]).pop();
     expect(updated.reminders.blink.intervalSec).toBe(600);
+  });
+
+  it('exposes a Windows autostart toggle that persists the setting', () => {
+    const onChange = vi.fn();
+    const s = cloneSettings(DEFAULT_SETTINGS);
+    render(<SettingsPanel settings={s} onChange={onChange} onReset={vi.fn()} />);
+    const toggle = screen.getByTestId('settings-autostart');
+    expect(toggle).toBeInTheDocument();
+    fireEvent.click(toggle);
+    expect(onChange).toHaveBeenCalled();
+    const updated = onChange.mock.calls.map((c) => c[0]).pop();
+    expect(updated.autostart).toBe(!DEFAULT_SETTINGS.autostart);
   });
 });

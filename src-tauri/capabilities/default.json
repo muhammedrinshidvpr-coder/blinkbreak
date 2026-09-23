@@ -1,0 +1,15 @@
+{
+  "$schema": "../gen/schemas/desktop-schema.json",
+  "identifier": "main-capability",
+  "description": "BlinkBreak desktop permissions",
+  "windows": ["main", "reminder"],
+  "permissions": [
+    "core:default",
+    "core:event:default",
+    "core:window:default",
+    "autostart:default",
+    "notification:default",
+    "store:default",
+    "single-instance:default"
+  ]
+}

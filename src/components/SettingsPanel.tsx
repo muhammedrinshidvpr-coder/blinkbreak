@@ -1,4 +1,5 @@
 import type { AppSettings, ReminderKind } from '../lib/types';
+import { setAutostartEnabled } from '../lib/native';
 
 const KINDS: ReminderKind[] = ['blink', 'lookaway', 'posture', 'move', 'rest'];
 
@@ -68,6 +69,18 @@ export function SettingsPanel({
             onChange={(e) => set((s) => { s.quietHours.enabled = e.target.checked; })}
           />
           Quiet hours ({settings.quietHours.start}–{settings.quietHours.end})
+        </label>
+        <label style={{ display: 'flex', gap: 8, alignItems: 'center' }} title="Launch BlinkBreak in the system tray when you sign in to Windows">
+          <input
+            type="checkbox" data-testid="settings-autostart"
+            checked={settings.autostart}
+            onChange={(e) => {
+              const enabled = e.target.checked;
+              set((s) => { s.autostart = enabled; });
+              void setAutostartEnabled(enabled);
+            }}
+          />
+          Start with Windows
         </label>
       </div>
       <div className="bb-row">

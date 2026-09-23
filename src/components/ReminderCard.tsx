@@ -45,7 +45,7 @@ export function ReminderCard({
       </p>
       <div className="bb-row">
         <button className="bb-btn primary" data-testid="reminder-done" onClick={() => onAction('done')}>Done</button>
-        <button className="bb-btn" data-testid="reminder-snooze" onClick={() => onAction('snooze')}>Snooze</button>
+        <button className="bb-btn" data-testid="reminder-snooze" onClick={() => onAction('snooze')}>Snooze 5m</button>
         <button className="bb-btn ghost" data-testid="reminder-skip" onClick={() => onAction('skip')}>Skip</button>
       </div>
     </div>
