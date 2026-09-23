@@ -119,7 +119,10 @@ export default function App() {
             nextInSec={nextIn}
             paused={paused}
             stats={stats}
-            onBreakNow={() => setActiveReminder({ kind: 'lookaway' })}
+            onBreakNow={() => {
+              setActiveReminder({ kind: 'lookaway' });
+              setStats((prev) => ({ ...prev, shown: { ...prev.shown, lookaway: (prev.shown.lookaway ?? 0) + 1 } }));
+            }}
             onPause={(min) => setSettings((s) => ({ ...s, pauseUntilMs: Date.now() + min * 60_000 }))}
             onResume={() => setSettings((s) => ({ ...s, pauseUntilMs: null }))}
           />
