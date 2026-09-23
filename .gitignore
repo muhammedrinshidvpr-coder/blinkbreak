@@ -7,3 +7,4 @@ Thumbs.db
 src-tauri/target/
 src-tauri/gen/
 coverage/
+vite-dev.log
