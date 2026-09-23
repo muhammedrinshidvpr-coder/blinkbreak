@@ -1,0 +1,20 @@
+{
+  "$schema": "https://schema.tauri.app/config/2",
+  "productName": "BlinkBreak",
+  "version": "0.1.0",
+  "identifier": "com.blinkbreak.app",
+  "build": { "frontendDist": "../dist", "devUrl": "http://localhost:1420", "beforeDevCommand": "npm run dev", "beforeBuildCommand": "npm run build" },
+  "app": {
+    "windows": [
+      { "label": "main", "title": "BlinkBreak", "width": 920, "height": 720 },
+      { "label": "reminder", "title": "BlinkBreak reminder", "width": 360, "height": 420, "decorations": false, "transparent": true, "alwaysOnTop": true, "skipTaskbar": true, "visible": false, "focus": false }
+    ],
+    "trayIcon": { "iconPath": "icons/icon.png", "tooltip": "BlinkBreak — gentle health reminders" }
+  },
+  "bundle": {
+    "active": true,
+    "targets": ["nsis"],
+    "icon": ["icons/icon.png"],
+    "windows": { "nsis": { "installMode": "perUser" } }
+  }
+}

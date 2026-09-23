@@ -1,0 +1,22 @@
+[package]
+name = "blinkbreak"
+version = "0.1.0"
+edition = "2021"
+
+[lib]
+name = "blinkbreak_lib"
+crate-type = ["staticlib", "cdylib", "rlib"]
+
+[build-dependencies]
+tauri-build = { version = "2", features = [] }
+
+[dependencies]
+tauri = { version = "2", features = ["tray-icon"] }
+tauri-plugin-autostart = "2"
+tauri-plugin-notification = "2"
+tauri-plugin-single-instance = "2"
+tauri-plugin-store = "2"
+serde = { version = "1", features = ["derive"] }
+serde_json = "1"
+chrono = "0.4"
+windows = { version = "0.58", features = ["Win32_UI_Input_KeyboardAndMouse", "Win32_System_SystemInformation"] }
