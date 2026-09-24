@@ -5,7 +5,7 @@ import type { CardAction } from './ReminderCard';
 import { OverlayReminder } from './OverlayReminder';
 import { BlinkToast } from './BlinkToast';
 
-export function NativeReminder({ reducedMotion }: { reducedMotion: boolean }) {
+export function NativeReminder() {
   const [reminder, setReminder] = useState<{ payload: ReminderPayload; sequence: number } | null>(null);
 
   useEffect(() => {
@@ -40,7 +40,7 @@ export function NativeReminder({ reducedMotion }: { reducedMotion: boolean }) {
   return (
     <main className="native-reminder-shell">
       {payload.presentation === 'toast' ? (
-        <BlinkToast key={sequence} durationSec={payload.durationSec} reducedMotion={reducedMotion} onAction={action} />
+        <BlinkToast key={sequence} durationSec={payload.durationSec} reducedMotion={payload.reducedMotion} onAction={action} />
       ) : (
         <OverlayReminder
           key={sequence}
@@ -49,7 +49,7 @@ export function NativeReminder({ reducedMotion }: { reducedMotion: boolean }) {
           body={payload.body}
           durationSec={payload.durationSec}
           snoozeSec={payload.snoozeSec}
-          reducedMotion={reducedMotion}
+          reducedMotion={payload.reducedMotion}
           onAction={action}
         />
       )}

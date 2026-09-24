@@ -3,11 +3,11 @@ name: Build Windows installer
 on:
   push:
     branches: [master]
+  pull_request:
   workflow_dispatch:
 
 permissions:
   contents: read
-  actions: write
 
 jobs:
   test:
@@ -33,7 +33,13 @@ jobs:
           cache: npm
       - name: Install Rust stable
         uses: dtolnay/rust-toolchain@stable
+      - uses: Swatinem/rust-cache@v2
+        with:
+          workspaces: src-tauri
       - run: npm ci
+      - name: Rust format check
+        working-directory: src-tauri
+        run: cargo fmt --check
       - name: Build Tauri app (NSIS installer)
         run: npm run tauri build
       - name: Upload installer artifact

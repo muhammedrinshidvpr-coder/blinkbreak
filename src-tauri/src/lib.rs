@@ -62,6 +62,7 @@ fn show_reminder(
     snooze_sec: u64,
     presentation: String,
     expiry_action: String,
+    reduced_motion: bool,
 ) -> Result<(), String> {
     let Some(win) = app.get_webview_window("reminder") else {
         return Err("no reminder window".into());
@@ -106,6 +107,7 @@ fn show_reminder(
             "snoozeSec": snooze_sec,
             "presentation": presentation,
             "expiryAction": expiry_action,
+            "reducedMotion": reduced_motion,
         }),
     )
     .map_err(|e| e.to_string())?;
@@ -207,8 +209,6 @@ pub fn run() {
                 let _ = w.set_focus();
             }
         }))
-        .plugin(tauri_plugin_store::Builder::new().build())
-        .plugin(tauri_plugin_notification::init())
         .setup(|app| {
             if let Some(main_window) = app.get_webview_window("main") {
                 let window_for_close = main_window.clone();

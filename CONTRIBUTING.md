@@ -37,12 +37,19 @@ npm run tauri build
 | Path | What lives there |
 |---|---|
 | `src/lib/` | Pure logic: scheduler, activity classification, types, Tauri bridge |
-| `src/components/` | UI: overlay, reminder card, cartoons, dashboard, settings |
-| `src-tauri/src/lib.rs` | Native shell: tray, idle time, overlay window, fullscreen check |
-| `.github/workflows/` | CI: tests on every push, NSIS installer build on `master` |
+| `src/components/` | UI: blink toast, overlay, reminder card, cartoons, dashboard, settings |
+| `src-tauri/src/lib.rs` | Native shell: tray, idle time, reminder window + close watchdog, fullscreen check |
+| `.github/workflows/` | CI on every push and PR; `release.yml` publishes installers for version tags |
 
 ## Release flow
 
-Pushes to `master` run CI (tests, then the Windows installer build) and the
-installer is uploaded as a workflow artifact. Versioned GitHub Releases are
-cut manually from a green `master`.
+Every push to `master` and every pull request runs the tests and builds the
+Windows installer (uploaded as a workflow artifact).
+
+To publish a release:
+
+1. Bump `version` in `package.json`, `src-tauri/tauri.conf.json`, and
+   `src-tauri/Cargo.toml` (all three must match).
+2. Commit, then tag and push: `git tag v0.2.0 && git push origin v0.2.0`.
+3. `release.yml` checks the tag matches the app version, builds the installer,
+   and publishes a GitHub Release with it attached and auto-generated notes.

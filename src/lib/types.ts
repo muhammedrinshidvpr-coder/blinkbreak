@@ -27,7 +27,6 @@ export interface AppSettings {
   quietHours: { enabled: boolean; start: string; end: string };
   sound: { enabled: boolean; volume: number };
   reducedMotion: boolean;
-  reminderPosition: 'bottom-right' | 'bottom-left' | 'top-right' | 'top-left' | 'center';
   autostart: boolean;
   fullscreenDefer: boolean;
   pauseUntilMs: number | null;
@@ -111,7 +110,6 @@ export const DEFAULT_SETTINGS: AppSettings = {
   quietHours: { enabled: false, start: '22:00', end: '08:00' },
   sound: { enabled: false, volume: 0.4 },
   reducedMotion: false,
-  reminderPosition: 'bottom-right',
   autostart: true,
   fullscreenDefer: true,
   pauseUntilMs: null,

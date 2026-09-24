@@ -9,6 +9,8 @@ export interface ReminderPayload {
   presentation: ReminderPresentation;
   /** Action the native watchdog records if the reminder window never reports back. */
   expiryAction: 'done' | 'skip';
+  /** Sent with each reminder: the reminder window's own settings copy is only read at startup. */
+  reducedMotion: boolean;
 }
 
 type TauriWindow = Window & { __TAURI_INTERNALS__?: unknown };

@@ -113,6 +113,7 @@ export default function App() {
             snoozeSec: settings.reminders[reminder.kind].snoozeSec,
             presentation: presentationFor(reminder.kind),
             expiryAction: expiryActionFor(reminder.kind),
+            reducedMotion: settings.reducedMotion,
           });
         } catch {
           reminderVisibleRef.current = false;
@@ -231,7 +232,7 @@ export default function App() {
 
   const paused = isPaused(settings, Date.now());
 
-  if (windowLabel === 'reminder') return <NativeReminder reducedMotion={settings.reducedMotion} />;
+  if (windowLabel === 'reminder') return <NativeReminder />;
 
   return (
     <div className="bb-shell">

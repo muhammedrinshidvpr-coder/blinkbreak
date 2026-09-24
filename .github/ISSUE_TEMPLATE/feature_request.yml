@@ -1,0 +1,14 @@
+name: Feature idea
+description: Suggest a gentle improvement
+labels: [enhancement]
+body:
+  - type: textarea
+    id: idea
+    attributes:
+      label: What would you like BlinkBreak to do?
+    validations:
+      required: true
+  - type: textarea
+    id: why
+    attributes:
+      label: Why would it help?

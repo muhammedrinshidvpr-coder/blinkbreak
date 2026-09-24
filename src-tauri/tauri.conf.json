@@ -3,18 +3,60 @@
   "productName": "BlinkBreak",
   "version": "0.1.0",
   "identifier": "com.blinkbreak.desktop",
-  "build": { "frontendDist": "../dist", "devUrl": "http://localhost:1420", "beforeDevCommand": "npm run dev", "beforeBuildCommand": "npm run build" },
+  "build": {
+    "frontendDist": "../dist",
+    "devUrl": "http://localhost:1420",
+    "beforeDevCommand": "npm run dev",
+    "beforeBuildCommand": "npm run build"
+  },
   "app": {
     "windows": [
-      { "label": "main", "title": "BlinkBreak", "width": 920, "height": 720 },
-      { "label": "reminder", "title": "BlinkBreak reminder", "width": 800, "height": 600, "decorations": false, "transparent": true, "alwaysOnTop": true, "skipTaskbar": true, "visible": false, "focus": false, "focusable": false, "resizable": false, "shadow": false }
+      {
+        "label": "main",
+        "title": "BlinkBreak",
+        "width": 920,
+        "height": 720
+      },
+      {
+        "label": "reminder",
+        "title": "BlinkBreak reminder",
+        "width": 800,
+        "height": 600,
+        "decorations": false,
+        "transparent": true,
+        "alwaysOnTop": true,
+        "skipTaskbar": true,
+        "visible": false,
+        "focus": false,
+        "focusable": false,
+        "resizable": false,
+        "shadow": false
+      }
     ],
-    "trayIcon": { "iconPath": "icons/icon.png", "tooltip": "BlinkBreak — gentle health reminders" }
+    "trayIcon": {
+      "iconPath": "icons/icon.png",
+      "tooltip": "BlinkBreak — gentle health reminders"
+    },
+    "security": {
+      "csp": "default-src 'self'; script-src 'self'; style-src 'self' 'unsafe-inline'; img-src 'self' data:; connect-src ipc: http://ipc.localhost",
+      "devCsp": null
+    }
   },
   "bundle": {
     "active": true,
-    "targets": ["nsis"],
-    "icon": ["icons/icon.png"],
-    "windows": { "nsis": { "installMode": "currentUser" } }
+    "targets": [
+      "nsis"
+    ],
+    "icon": [
+      "icons/32x32.png",
+      "icons/128x128.png",
+      "icons/icon.png",
+      "icons/icon.ico"
+    ],
+    "windows": {
+      "nsis": {
+        "installMode": "currentUser"
+      }
+    }
   }
 }

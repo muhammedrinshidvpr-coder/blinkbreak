@@ -55,7 +55,7 @@ describe('ReminderCard', () => {
 
 describe('NativeReminder', () => {
   it('stays inert until a native reminder payload arrives', () => {
-    render(<NativeReminder reducedMotion />);
+    render(<NativeReminder />);
     expect(screen.queryByRole('alertdialog')).not.toBeInTheDocument();
   });
 });
@@ -88,6 +88,16 @@ describe('SettingsPanel', () => {
     fireEvent.change(screen.getByTestId('settings-interval-blink'), { target: { value: '10' } });
     const updated = onChange.mock.calls.map((c) => c[0]).pop();
     expect(updated.reminders.blink.intervalSec).toBe(600);
+  });
+
+  it('edits quiet-hours start and end times and has no dead card-position setting', () => {
+    const onChange = vi.fn();
+    render(<SettingsPanel settings={cloneSettings(DEFAULT_SETTINGS)} onChange={onChange} onReset={vi.fn()} />);
+    fireEvent.change(screen.getByTestId('settings-quiet-start'), { target: { value: '21:30' } });
+    expect(onChange.mock.lastCall?.[0].quietHours.start).toBe('21:30');
+    fireEvent.change(screen.getByTestId('settings-quiet-end'), { target: { value: '07:15' } });
+    expect(onChange.mock.lastCall?.[0].quietHours.end).toBe('07:15');
+    expect(screen.queryByTestId('settings-position')).not.toBeInTheDocument();
   });
 
   it('exposes a Windows autostart toggle that persists the setting', () => {

@@ -41,19 +41,6 @@ export function SettingsPanel({
         </div>
       ))}
       <div className="bb-row">
-        <label className="bb-field">Card position
-          <select
-            className="bb-input" data-testid="settings-position"
-            value={settings.reminderPosition}
-            onChange={(e) => set((s) => { s.reminderPosition = e.target.value as AppSettings['reminderPosition']; })}
-          >
-            <option value="bottom-right">Bottom right</option>
-            <option value="bottom-left">Bottom left</option>
-            <option value="top-right">Top right</option>
-            <option value="top-left">Top left</option>
-            <option value="center">Center</option>
-          </select>
-        </label>
         <label style={{ display: 'flex', gap: 8, alignItems: 'center' }}>
           <input
             type="checkbox" data-testid="settings-reduced-motion"
@@ -68,7 +55,21 @@ export function SettingsPanel({
             checked={settings.quietHours.enabled}
             onChange={(e) => set((s) => { s.quietHours.enabled = e.target.checked; })}
           />
-          Quiet hours ({settings.quietHours.start}–{settings.quietHours.end})
+          Quiet hours
+        </label>
+        <label className="bb-field">From
+          <input
+            className="bb-input" type="time" data-testid="settings-quiet-start"
+            value={settings.quietHours.start}
+            onChange={(e) => { const v = e.target.value; if (v) set((s) => { s.quietHours.start = v; }); }}
+          />
+        </label>
+        <label className="bb-field">To
+          <input
+            className="bb-input" type="time" data-testid="settings-quiet-end"
+            value={settings.quietHours.end}
+            onChange={(e) => { const v = e.target.value; if (v) set((s) => { s.quietHours.end = v; }); }}
+          />
         </label>
         <label style={{ display: 'flex', gap: 8, alignItems: 'center' }} title="Launch BlinkBreak in the system tray when you sign in to Windows">
           <input

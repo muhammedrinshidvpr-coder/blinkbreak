@@ -68,10 +68,10 @@ describe('NativeReminder routing', () => {
     }));
     vi.resetModules();
     const { NativeReminder: Routed } = await import('./NativeReminder');
-    render(<Routed reducedMotion={false} />);
+    render(<Routed />);
     await act(async () => {});
 
-    const base = { title: 't', body: 'b', durationSec: 10, snoozeSec: 600 };
+    const base = { title: 't', body: 'b', durationSec: 10, snoozeSec: 600, reducedMotion: false };
     act(() => handlers[0]({ ...base, kind: 'blink', presentation: 'toast', expiryAction: 'done' }));
     expect(screen.getByTestId('blink-toast')).toBeInTheDocument();
     expect(screen.queryByTestId('reminder-overlay')).not.toBeInTheDocument();
@@ -83,7 +83,7 @@ describe('NativeReminder routing', () => {
   });
 
   it('is inert before any payload arrives', () => {
-    render(<NativeReminder reducedMotion />);
+    render(<NativeReminder />);
     expect(screen.queryByTestId('blink-toast')).not.toBeInTheDocument();
   });
 });
