@@ -1,7 +1,14 @@
+import type { ReminderPresentation } from './types';
+
 export interface ReminderPayload {
   kind: string;
   title: string;
   body: string;
+  durationSec: number;
+  snoozeSec: number;
+  presentation: ReminderPresentation;
+  /** Action the native watchdog records if the reminder window never reports back. */
+  expiryAction: 'done' | 'skip';
 }
 
 type TauriWindow = Window & { __TAURI_INTERNALS__?: unknown };
@@ -33,6 +40,16 @@ export async function hideNativeReminder(): Promise<void> {
   if (!isTauriRuntime()) return;
   const { invoke } = await import('@tauri-apps/api/core');
   await invoke('hide_reminder');
+}
+
+export async function isFullscreenActive(): Promise<boolean> {
+  if (!isTauriRuntime()) return false;
+  try {
+    const { invoke } = await import('@tauri-apps/api/core');
+    return await invoke<boolean>('is_fullscreen_active');
+  } catch {
+    return false;
+  }
 }
 
 export async function emitReminderAction(payload: { kind: string; action: string }): Promise<void> {

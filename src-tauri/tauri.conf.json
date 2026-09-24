@@ -7,7 +7,7 @@
   "app": {
     "windows": [
       { "label": "main", "title": "BlinkBreak", "width": 920, "height": 720 },
-      { "label": "reminder", "title": "BlinkBreak reminder", "width": 360, "height": 420, "decorations": false, "transparent": true, "alwaysOnTop": true, "skipTaskbar": true, "visible": false, "focus": false }
+      { "label": "reminder", "title": "BlinkBreak reminder", "width": 800, "height": 600, "decorations": false, "transparent": true, "alwaysOnTop": true, "skipTaskbar": true, "visible": false, "focus": false, "focusable": false, "resizable": false, "shadow": false }
     ],
     "trayIcon": { "iconPath": "icons/icon.png", "tooltip": "BlinkBreak — gentle health reminders" }
   },

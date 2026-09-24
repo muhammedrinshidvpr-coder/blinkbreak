@@ -1,5 +1,5 @@
 # BlinkBreak — Implementation Plan
-Date: 2026-09-24 / Status: v0.1 BUILT & VERIFIED (frontend) — Tauri bundle pending toolchain
+Date: 2026-09-24 / Status: v0.1 BUILT, VERIFIED, AND PACKAGED
 Decisions: Windows-first, always-gentle reminders, reminder-only posture (no camera), local-only.
 
 ## 1. Data Models (BACKBONE)
@@ -41,11 +41,9 @@ Decisions: Windows-first, always-gentle reminders, reminder-only posture (no cam
 - [x] 22/22 tests pass, tsc clean, prod build clean, 0 browser console errors
 - [x] Every reminder dismissible; countdowns tick and floor at 0
 - [x] Idle/active separation tested; sleep never floods
-- [ ] Tauri `cargo build` + NSIS installer (needs Rust MSVC toolchain on Windows — NOT installed here)
+- [x] Tauri `cargo check` + release build + NSIS installer
 - [ ] Day-long soak + multi-monitor/DPI/fullscreen manual tests (needs installed app)
 
 ## 8. Next Steps
-1. Install Rust + MSVC Build Tools + WebView2 SDK → `cargo tauri build` → NSIS setup.exe.
-2. Wire frontend demo clock to `get_idle_secs` invoke + `blinkbreak:reminder` listener.
-3. Icon set (`src-tauri/icons/`), signed installer, fullscreen-defer behavior.
-4. Soak test 1 working day; multi-monitor/DPI pass.
+1. Soak test 1 working day; multi-monitor/DPI/fullscreen manual pass.
+2. Sign the installer before public distribution.

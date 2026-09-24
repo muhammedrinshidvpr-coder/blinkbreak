@@ -1,18 +1,32 @@
 import { useEffect, useMemo, useRef, useState } from 'react';
 import './index.css';
-import { DEFAULT_SETTINGS, cloneSettings, sanitizeSettings, type AppSettings, type DayStats, type ReminderKind } from './lib/types';
+import {
+  DEFAULT_SETTINGS,
+  REMINDER_META,
+  cloneSettings,
+  expiryActionFor,
+  presentationFor,
+  sanitizeSettings,
+  type AppSettings,
+  type DayStats,
+  type ReminderEvent,
+  type ReminderKind,
+} from './lib/types';
 import { createSchedulerState, tick, applyAction, nextDueInSec, isPaused, type SchedulerState } from './lib/scheduler';
 import { classifyActivity } from './lib/activity';
 import {
   getAutostartEnabled,
   getIdleSeconds,
   getWindowLabel,
+  isFullscreenActive,
   isTauriRuntime,
   listen,
   showNativeReminder,
 } from './lib/native';
-import { ReminderCard, type CardAction } from './components/ReminderCard';
+import type { CardAction } from './components/ReminderCard';
 import { NativeReminder } from './components/NativeReminder';
+import { OverlayReminder } from './components/OverlayReminder';
+import { BlinkToast } from './components/BlinkToast';
 import { Dashboard } from './components/Dashboard';
 import { SettingsPanel } from './components/SettingsPanel';
 import { BlinkEye } from './components/cartoon/BlinkEye';
@@ -53,11 +67,9 @@ export default function App() {
   const [tab, setTab] = useState<'today' | 'gallery' | 'settings'>('today');
   const [windowLabel, setWindowLabel] = useState('main');
   const schedRef = useRef<SchedulerState>(createSchedulerState());
-  const activeReminderRef = useRef(activeReminder);
-
-  useEffect(() => {
-    activeReminderRef.current = activeReminder;
-  }, [activeReminder]);
+  const reminderVisibleRef = useRef(false);
+  const presentingReminderRef = useRef(false);
+  const pendingReminderRef = useRef<ReminderEvent | null>(null);
 
   useEffect(() => {
     void getWindowLabel().then(setWindowLabel);
@@ -74,10 +86,57 @@ export default function App() {
     localStorage.setItem(STATS_KEY, JSON.stringify(stats));
   }, [stats]);
 
+  const presentReminder = async (reminder: ReminderEvent): Promise<boolean> => {
+    if (reminderVisibleRef.current || presentingReminderRef.current) return false;
+    presentingReminderRef.current = true;
+
+    try {
+      if (isTauriRuntime() && settings.fullscreenDefer && await isFullscreenActive()) {
+        pendingReminderRef.current ??= reminder;
+        return false;
+      }
+
+      const showLocal = () => {
+        reminderVisibleRef.current = true;
+        setActiveReminder({ kind: reminder.kind });
+      };
+
+      pendingReminderRef.current = null;
+      if (isTauriRuntime()) {
+        reminderVisibleRef.current = true;
+        try {
+          await showNativeReminder({
+            kind: reminder.kind,
+            title: reminder.title,
+            body: reminder.body,
+            durationSec: settings.reminders[reminder.kind].durationSec,
+            snoozeSec: settings.reminders[reminder.kind].snoozeSec,
+            presentation: presentationFor(reminder.kind),
+            expiryAction: expiryActionFor(reminder.kind),
+          });
+        } catch {
+          reminderVisibleRef.current = false;
+          showLocal();
+        }
+      } else {
+        showLocal();
+      }
+
+      setStats((prev) => ({
+        ...prev,
+        shown: { ...prev.shown, [reminder.kind]: (prev.shown[reminder.kind] ?? 0) + 1 },
+      }));
+      return true;
+    } finally {
+      presentingReminderRef.current = false;
+    }
+  };
+
   useEffect(() => {
     if (windowLabel !== 'main') return;
     let unsubscribe: (() => void) | undefined;
     void listen<{ kind: ReminderKind; action: CardAction }>('blinkbreak:reminder-action', ({ kind, action }) => {
+      reminderVisibleRef.current = false;
       applyAction(schedRef.current, settings, kind, action);
       setStats((prev) => {
         const key = action === 'done' ? 'completed' : action === 'skip' ? 'skipped' : 'snoozed';
@@ -123,23 +182,19 @@ export default function App() {
         return;
       }
       setStats((prev) => ({ ...prev, activeSec: prev.activeSec + activity.activeSec }));
-      const ev = tick(schedRef.current, settings, now, activity.activeSec);
-      if (ev && !activeReminderRef.current) {
-        const showLocal = () => {
-          setActiveReminder({ kind: ev.kind });
-          setStats((prev) => ({ ...prev, shown: { ...prev.shown, [ev.kind]: (prev.shown[ev.kind] ?? 0) + 1 } }));
-        };
-        if (isTauriRuntime()) {
-          try {
-            await showNativeReminder({ kind: ev.kind, title: ev.title, body: ev.body });
-            setStats((prev) => ({ ...prev, shown: { ...prev.shown, [ev.kind]: (prev.shown[ev.kind] ?? 0) + 1 } }));
-          } catch {
-            showLocal();
-          }
-        } else {
-          showLocal();
-        }
+
+      if (pendingReminderRef.current && !reminderVisibleRef.current) {
+        await presentReminder(pendingReminderRef.current);
+        running = false;
+        return;
       }
+      if (reminderVisibleRef.current) {
+        running = false;
+        return;
+      }
+
+      const ev = tick(schedRef.current, settings, now, activity.activeSec);
+      if (ev) await presentReminder(ev);
       running = false;
     };
     const id = window.setInterval(() => void poll(), 1000);
@@ -155,6 +210,7 @@ export default function App() {
 
   const handleAction = (a: CardAction) => {
     if (!activeReminder) return;
+    reminderVisibleRef.current = false;
     applyAction(schedRef.current, settings, activeReminder.kind, a);
     const kind = activeReminder.kind;
     setStats((prev) => {
@@ -166,8 +222,7 @@ export default function App() {
 
   const handleBreakNow = () => {
     const kind: ReminderKind = 'lookaway';
-    setActiveReminder({ kind });
-    setStats((prev) => ({ ...prev, shown: { ...prev.shown, [kind]: (prev.shown[kind] ?? 0) + 1 } }));
+    void presentReminder({ kind, dueAtMs: Date.now(), ...REMINDER_META[kind] });
   };
   const handleBreakNowRef = useRef(handleBreakNow);
   useEffect(() => {
@@ -194,17 +249,23 @@ export default function App() {
         <button className={`bb-btn ${tab === 'settings' ? 'primary' : ''}`} data-testid="tab-settings" onClick={() => setTab('settings')}>Settings</button>
       </nav>
 
-      {activeReminder && (
-        <div className="bb-reminder-overlay">
-          <ReminderCard
-            kind={activeReminder.kind}
-            title={{ blink: 'Time to blink', lookaway: 'Look far away', posture: 'Posture reset', move: 'Move & stretch', rest: 'Take a longer rest' }[activeReminder.kind]}
-            body="A gentle nudge — dismiss any time. Your work is never blocked."
-            durationSec={settings.reminders[activeReminder.kind].durationSec}
-            reducedMotion={settings.reducedMotion}
-            onAction={handleAction}
-          />
-        </div>
+      {activeReminder && presentationFor(activeReminder.kind) === 'toast' && (
+        <BlinkToast
+          durationSec={settings.reminders[activeReminder.kind].durationSec}
+          reducedMotion={settings.reducedMotion}
+          onAction={handleAction}
+        />
+      )}
+      {activeReminder && presentationFor(activeReminder.kind) === 'overlay' && (
+        <OverlayReminder
+          kind={activeReminder.kind}
+          title={REMINDER_META[activeReminder.kind].title}
+          body={REMINDER_META[activeReminder.kind].body}
+          durationSec={settings.reminders[activeReminder.kind].durationSec}
+          snoozeSec={settings.reminders[activeReminder.kind].snoozeSec}
+          reducedMotion={settings.reducedMotion}
+          onAction={handleAction}
+        />
       )}
 
       <div className="bb-grid">

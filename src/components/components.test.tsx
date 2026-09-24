@@ -54,10 +54,9 @@ describe('ReminderCard', () => {
 });
 
 describe('NativeReminder', () => {
-  it('renders a safe fallback card before the native event arrives', () => {
+  it('stays inert until a native reminder payload arrives', () => {
     render(<NativeReminder reducedMotion />);
-    expect(screen.getByRole('alertdialog', { name: 'Blink, friend' })).toBeInTheDocument();
-    expect(screen.getByText('Relax your face and blink slowly.')).toBeInTheDocument();
+    expect(screen.queryByRole('alertdialog')).not.toBeInTheDocument();
   });
 });
 

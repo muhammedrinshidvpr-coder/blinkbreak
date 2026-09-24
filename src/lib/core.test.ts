@@ -42,3 +42,28 @@ describe('settings validation', () => {
     expect(validateSettings(bad).length).toBeGreaterThan(0);
   });
 });
+
+describe('reminder presentation + timing rules', () => {
+  it('blink is a toast, everything else is an overlay', async () => {
+    const { presentationFor } = await import('./types');
+    expect(presentationFor('blink')).toBe('toast');
+    for (const kind of ['lookaway', 'posture', 'move', 'rest'] as const) expect(presentationFor(kind)).toBe('overlay');
+  });
+
+  it('expiry counts as done only where following the countdown is the exercise', async () => {
+    const { expiryActionFor } = await import('./types');
+    expect(expiryActionFor('blink')).toBe('done');
+    expect(expiryActionFor('lookaway')).toBe('done');
+    expect(expiryActionFor('posture')).toBe('skip');
+    expect(expiryActionFor('move')).toBe('skip');
+    expect(expiryActionFor('rest')).toBe('skip');
+  });
+
+  it('formats every default snooze length the way the button shows it', async () => {
+    const { formatShortDuration, DEFAULT_SETTINGS } = await import('./types');
+    const labels = Object.values(DEFAULT_SETTINGS.reminders).map((r) => formatShortDuration(r.snoozeSec));
+    expect(labels).toEqual(['5m', '10m', '15m', '15m', '30m']);
+    expect(formatShortDuration(45)).toBe('45s');
+    expect(formatShortDuration(90 * 60)).toBe('1h 30m');
+  });
+});

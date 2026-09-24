@@ -3,6 +3,7 @@ import {
   getAutostartEnabled,
   getIdleSeconds,
   hideNativeReminder,
+  isFullscreenActive,
   isTauriRuntime,
   listen,
   setAutostartEnabled,
@@ -19,8 +20,11 @@ describe('native bridge outside Tauri (browser/jsdom)', () => {
   });
 
   it('reminder invoke paths safely report unavailable', async () => {
-    await expect(showNativeReminder({ kind: 'blink', title: 't', body: 'b' })).resolves.toBe(false);
+    await expect(showNativeReminder({
+      kind: 'blink', title: 't', body: 'b', durationSec: 10, snoozeSec: 300, presentation: 'toast', expiryAction: 'done',
+    })).resolves.toBe(false);
     await expect(hideNativeReminder()).resolves.toBeUndefined();
+    await expect(isFullscreenActive()).resolves.toBe(false);
   });
 
   it('event subscribe returns a working no-op cleanup', async () => {

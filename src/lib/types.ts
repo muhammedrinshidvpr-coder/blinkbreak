@@ -35,6 +35,30 @@ export interface AppSettings {
 
 export type ReminderAction = 'done' | 'skip' | 'snooze';
 
+/** Blink is a small top-center toast; everything else dims the screen. */
+export type ReminderPresentation = 'toast' | 'overlay';
+
+export function presentationFor(kind: ReminderKind): ReminderPresentation {
+  return kind === 'blink' ? 'toast' : 'overlay';
+}
+
+/**
+ * What a reminder records when its countdown runs out.
+ * Blink and look-away are done by simply following the countdown; the rest need the user to get up.
+ */
+export function expiryActionFor(kind: ReminderKind): 'done' | 'skip' {
+  return kind === 'blink' || kind === 'lookaway' ? 'done' : 'skip';
+}
+
+/** Compact duration label: 45s, 5m, 1h 30m. */
+export function formatShortDuration(sec: number): string {
+  if (sec < 60) return `${sec}s`;
+  const min = Math.round(sec / 60);
+  if (min < 60) return `${min}m`;
+  const h = Math.floor(min / 60);
+  return min % 60 ? `${h}h ${min % 60}m` : `${h}h`;
+}
+
 export interface ReminderEvent {
   kind: ReminderKind;
   dueAtMs: number;
