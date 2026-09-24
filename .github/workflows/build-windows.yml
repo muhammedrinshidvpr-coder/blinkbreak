@@ -28,5 +28,6 @@ jobs:
           cache: npm
       - name: Install Rust stable
         uses: dtolnay/rust-toolchain@stable
+      - run: npm ci
       - name: Build Tauri app (NSIS installer)
         uses: tauri-apps/tauri-action@v0
