@@ -1,3 +1,6 @@
+# Security updates always arrive (enabled in repo settings, not limited by this file).
+# Routine version updates: weekly, grouped, and minor/patch only. Major upgrades
+# (e.g. TypeScript 7, Vite 9) are done by hand so the toolchain moves together.
 version: 2
 updates:
   - package-ecosystem: npm
@@ -5,18 +8,27 @@ updates:
     schedule:
       interval: weekly
     groups:
-      npm-minor-and-patch:
-        update-types: [minor, patch]
-    open-pull-requests-limit: 5
+      npm:
+        patterns: ["*"]
+    ignore:
+      - dependency-name: "*"
+        update-types: ["version-update:semver-major"]
+    open-pull-requests-limit: 3
 
   - package-ecosystem: cargo
     directory: /src-tauri
     schedule:
       interval: weekly
     groups:
-      cargo-minor-and-patch:
-        update-types: [minor, patch]
-    open-pull-requests-limit: 5
+      cargo:
+        patterns: ["*"]
+    ignore:
+      - dependency-name: "*"
+        update-types: ["version-update:semver-major"]
+      # windows-rs breaks its API on every 0.x minor; upgrade by hand.
+      - dependency-name: "windows"
+        update-types: ["version-update:semver-minor"]
+    open-pull-requests-limit: 3
 
   - package-ecosystem: github-actions
     directory: /
