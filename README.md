@@ -56,6 +56,8 @@ BlinkBreak follows Windows by default. Choose **Settings → Appearance → Ligh
 
 ## Install
 
+**New to this?** Follow the [step-by-step install guide](docs/INSTALL.md). It takes about a minute.
+
 1. **[Download the latest installer](https://github.com/muhammedrinshidvpr-coder/blinkbreak/releases/latest)**
    (`BlinkBreak_x.y.z_x64-setup.exe`, about 2 MB).
 2. Run it. No admin rights needed; it installs just for you.
