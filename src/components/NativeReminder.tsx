@@ -5,16 +5,19 @@ import type { CardAction } from './ReminderCard';
 import { OverlayReminder } from './OverlayReminder';
 import { BlinkToast } from './BlinkToast';
 import { useApplyTheme } from '../lib/theme';
+import { playChime } from '../lib/chime';
 
 export function NativeReminder() {
   const [reminder, setReminder] = useState<{ payload: ReminderPayload; sequence: number } | null>(null);
 
   useEffect(() => {
     document.body.classList.add('bb-overlay-body');
+    document.documentElement.classList.add('bb-overlay-document');
     let unsubscribe: (() => void) | undefined;
     let cancelled = false;
     void listen<ReminderPayload>('blinkbreak:reminder', (next) => {
       if (!cancelled) {
+        if (next.chime) playChime(next.volume);
         setReminder((current) => ({ payload: next, sequence: (current?.sequence ?? 0) + 1 }));
       }
     }).then((cleanup) => {
@@ -25,6 +28,7 @@ export function NativeReminder() {
       cancelled = true;
       unsubscribe?.();
       document.body.classList.remove('bb-overlay-body');
+      document.documentElement.classList.remove('bb-overlay-document');
     };
   }, []);
 
@@ -32,8 +36,16 @@ export function NativeReminder() {
 
   const action = (next: CardAction) => {
     if (!reminder) return;
-    void emitReminderAction({ kind: reminder.payload.kind, action: next });
-    void hideNativeReminder();
+    // Hide first so the window is gone before the scheduler can present the next one;
+    // report the action even if hiding fails, or the scheduler would wait forever.
+    void (async () => {
+      try {
+        await hideNativeReminder();
+      } finally {
+        setReminder(null);
+        await emitReminderAction({ kind: reminder.payload.kind, action: next });
+      }
+    })();
   };
 
   if (!reminder) return <main className="native-reminder-shell" />;
@@ -54,6 +66,7 @@ export function NativeReminder() {
           snoozeSec={payload.snoozeSec}
           reducedMotion={payload.reducedMotion}
           onAction={action}
+          manageFocus={false}
         />
       )}
     </main>

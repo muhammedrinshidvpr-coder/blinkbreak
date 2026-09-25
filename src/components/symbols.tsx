@@ -1,6 +1,6 @@
 import { useId, type ReactNode } from 'react';
 import type { ReminderKind } from '../lib/types';
-import { blinkOpenness, breath, reach } from '../lib/timeline';
+import { blinkOpenness, breath, periodFor, reach } from '../lib/timeline';
 
 /**
  * Minimal line symbols for each reminder, drawn on a 40×40 grid in `currentColor`
@@ -11,6 +11,22 @@ interface SymbolProps {
   t: number;
   durationSec: number;
   still?: boolean;
+}
+
+/** Ideal cycle length of each "reach, hold, return" motion. */
+const REACH_PERIOD = { lookaway: 20, posture: 12, move: 20 } as const;
+const BREATH_PERIOD = 11;
+
+/**
+ * A moment in the motion that matches the `still` pose, so animation can begin from rest
+ * without a jump (reach holds at 30 % of its cycle; breath is full at 4/11).
+ */
+export function restTime(kind: ReminderKind, durationSec: number): number {
+  switch (kind) {
+    case 'blink': return 0;
+    case 'rest': return (4 / 11) * periodFor(durationSec, BREATH_PERIOD);
+    default: return 0.3 * periodFor(durationSec, REACH_PERIOD[kind]);
+  }
 }
 
 function Svg({ label, children }: { label: string; children: ReactNode }) {
@@ -47,7 +63,7 @@ export function EyeSymbol({ t, durationSec, still }: SymbolProps) {
 }
 
 export function HorizonSymbol({ t, durationSec, still }: SymbolProps) {
-  const k = still ? 1 : reach(t, durationSec, 20);
+  const k = still ? 1 : reach(t, durationSec, REACH_PERIOD.lookaway);
   const y = 31 - 9 * k;
   return (
     <Svg label="Focus drifting to a far horizon">
@@ -60,7 +76,7 @@ export function HorizonSymbol({ t, durationSec, still }: SymbolProps) {
 }
 
 export function SpineSymbol({ t, durationSec, still }: SymbolProps) {
-  const k = still ? 1 : reach(t, durationSec, 12);
+  const k = still ? 1 : reach(t, durationSec, REACH_PERIOD.posture);
   return (
     <Svg label="Spine easing upright">
       {[0, 1, 2, 3, 4].map((i) => (
@@ -78,7 +94,7 @@ export function SpineSymbol({ t, durationSec, still }: SymbolProps) {
 }
 
 export function StretchSymbol({ t, durationSec, still }: SymbolProps) {
-  const k = still ? 1 : reach(t, durationSec, 20);
+  const k = still ? 1 : reach(t, durationSec, REACH_PERIOD.move);
   // Arms are one smooth arc through the shoulders: hands low at the sides → raised overhead.
   const hands = 25 - 15 * k;
   const spread = 7.5 - 1.5 * k;
@@ -96,7 +112,7 @@ export function StretchSymbol({ t, durationSec, still }: SymbolProps) {
 }
 
 export function BreathSymbol({ t, durationSec, still }: SymbolProps) {
-  const b = still ? 0.6 : breath(t, durationSec);
+  const b = still ? 1 : breath(t, durationSec);
   return (
     <Svg label="Circle breathing slowly">
       <circle data-testid="breath-circle" cx="20" cy="20" r={5 + 6 * b} fill="var(--bb-accent)" opacity={0.14 + 0.12 * b} />
@@ -116,13 +132,14 @@ export function ReminderSymbol({ kind, ...props }: SymbolProps & { kind: Reminde
   }
 }
 
-/** Thin ring that drains over `durationSec` (CSS-driven, keeps running under reduced motion). */
-export function ProgressRing({ durationSec, children, size }: { durationSec: number; children: ReactNode; size: number }) {
+/** Progress comes from the same deadline as expiry; standalone previews can use CSS. */
+export function ProgressRing({ durationSec, children, size, progress }: { durationSec: number; children: ReactNode; size: number; progress?: number }) {
   return (
     <div className="bb-ring" style={{ width: size, height: size, ['--bb-duration' as string]: `${durationSec}s` }}>
       <svg viewBox="0 0 40 40" aria-hidden="true">
         <circle cx="20" cy="20" r="18.8" className="bb-ring-track" />
-        <circle cx="20" cy="20" r="18.8" className="bb-ring-progress" pathLength={100} data-testid="progress-ring" />
+        <circle cx="20" cy="20" r="18.8" className="bb-ring-progress" pathLength={100} data-testid="progress-ring"
+          style={progress === undefined ? undefined : { animation: 'none', strokeDashoffset: 100 * (1 - progress) }} />
       </svg>
       <div className="bb-ring-inner">{children}</div>
     </div>

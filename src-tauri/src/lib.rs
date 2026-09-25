@@ -65,6 +65,8 @@ fn show_reminder(
     expiry_action: String,
     reduced_motion: bool,
     theme: String,
+    chime: bool,
+    volume: f64,
 ) -> Result<(), String> {
     let Some(win) = app.get_webview_window("reminder") else {
         return Err("no reminder window".into());
@@ -111,6 +113,8 @@ fn show_reminder(
             "expiryAction": expiry_action,
             "reducedMotion": reduced_motion,
             "theme": theme,
+            "chime": chime,
+            "volume": volume,
         }),
     )
     .map_err(|e| e.to_string())?;

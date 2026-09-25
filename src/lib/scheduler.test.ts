@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest';
-import { createSchedulerState, tick, applyAction, nextDueInSec, inQuietHours } from './scheduler';
+import { createSchedulerState, tick, applyAction, nextDue, nextDueInSec, inQuietHours } from './scheduler';
 import { DEFAULT_SETTINGS, cloneSettings } from './types';
 
 describe('scheduler timing', () => {
@@ -73,5 +73,15 @@ describe('scheduler timing', () => {
     const t0 = Date.now();
     tick(st, s, t0, 100);
     expect(tick(st, s, t0 - 5000, 5000)).toBeNull();
+  });
+});
+
+describe('nextDue', () => {
+  it('names the soonest enabled reminder', () => {
+    const settings = cloneSettings(DEFAULT_SETTINGS);
+    const state = createSchedulerState();
+    expect(nextDue(state, settings, Date.now())).toEqual({ kind: 'blink', inSec: 5 * 60 });
+    settings.reminders.blink.enabled = false;
+    expect(nextDue(state, settings, Date.now())).toEqual({ kind: 'lookaway', inSec: 20 * 60 });
   });
 });

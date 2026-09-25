@@ -1,8 +1,10 @@
-import { useEffect, useRef, useState } from 'react';
+import { useEffect, useRef } from 'react';
 import { formatShortDuration, type ReminderKind } from '../lib/types';
-import { isInhaling } from '../lib/timeline';
+import { breathInstruction } from '../lib/timeline';
 import { ProgressRing, ReminderSymbol } from './symbols';
 import { useElapsed } from './useElapsed';
+import { useCountdown } from './useCountdown';
+import { useReducedMotion } from '../lib/motion';
 
 export type CardAction = 'done' | 'skip' | 'snooze';
 
@@ -26,7 +28,8 @@ export function ReminderCard({
   onAction: (a: CardAction) => void;
   onExpire?: () => void;
 }) {
-  const [left, setLeft] = useState(durationSec);
+  reducedMotion = useReducedMotion(reducedMotion);
+  const { left, progress } = useCountdown(durationSec);
   const expiredRef = useRef(false);
   const onExpireRef = useRef(onExpire);
   const t = useElapsed(!reducedMotion);
@@ -36,15 +39,7 @@ export function ReminderCard({
   }, [onExpire]);
 
   useEffect(() => {
-    const safeDuration = Math.max(0, Math.ceil(durationSec));
-    const deadline = Date.now() + safeDuration * 1000;
     expiredRef.current = false;
-    setLeft(safeDuration);
-    if (durationSec <= 0) return;
-
-    const update = () => setLeft(Math.max(0, Math.ceil((deadline - Date.now()) / 1000)));
-    const id = window.setInterval(update, 250);
-    return () => clearInterval(id);
   }, [kind, durationSec]);
 
   useEffect(() => {
@@ -57,17 +52,17 @@ export function ReminderCard({
   const remaining = left >= 60
     ? `${Math.floor(left / 60)}:${String(left % 60).padStart(2, '0')}`
     : `${left}s`;
-  const line = kind === 'rest' && !reducedMotion ? (isInhaling(t, durationSec) ? 'Breathe in' : 'Breathe out') : body;
+  const line = kind === 'rest' && !reducedMotion ? breathInstruction(t, durationSec) : body;
   const snooze = formatShortDuration(snoozeSec);
 
   return (
-    <div className="bb-reminder" data-kind={kind} data-testid={`reminder-${kind}`} role="alertdialog" aria-label={title}>
-      <ProgressRing durationSec={durationSec} size={92}>
+    <div className="bb-reminder" data-kind={kind} data-testid={`reminder-${kind}`}>
+      <ProgressRing durationSec={durationSec} size={92} progress={progress}>
         <ReminderSymbol kind={kind} t={t} durationSec={durationSec} still={reducedMotion} />
       </ProgressRing>
       <h2>{title}</h2>
       <p key={line} className="bb-reminder-line">{line}</p>
-      <span className="bb-sr-only" data-testid="reminder-countdown">{remaining} left</span>
+      <span className={durationSec >= 60 ? 'bb-duration' : 'bb-sr-only'} data-testid="reminder-countdown">{remaining} left</span>
       <div className="bb-actions">
         <button className="bb-btn primary" data-testid="reminder-done" onClick={() => onAction('done')}>Done</button>
         <button

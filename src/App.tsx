@@ -3,6 +3,7 @@ import './index.css';
 import {
   DEFAULT_SETTINGS,
   REMINDER_META,
+  chimeFor,
   cloneSettings,
   expiryActionFor,
   presentationFor,
@@ -12,7 +13,7 @@ import {
   type ReminderEvent,
   type ReminderKind,
 } from './lib/types';
-import { createSchedulerState, tick, applyAction, nextDueInSec, isPaused, type SchedulerState } from './lib/scheduler';
+import { createSchedulerState, tick, applyAction, nextDue, inQuietHours, isPaused, type SchedulerState } from './lib/scheduler';
 import { classifyActivity } from './lib/activity';
 import {
   getAutostartEnabled,
@@ -21,14 +22,18 @@ import {
   isFullscreenActive,
   isTauriRuntime,
   listen,
+  setAutostartEnabled,
   showNativeReminder,
 } from './lib/native';
 import type { CardAction } from './components/ReminderCard';
 import { useApplyTheme, useResolvedTheme } from './lib/theme';
+import { useReducedMotion } from './lib/motion';
+import { playChime } from './lib/chime';
 import { NativeReminder } from './components/NativeReminder';
 import { OverlayReminder } from './components/OverlayReminder';
 import { BlinkToast } from './components/BlinkToast';
-import { Dashboard } from './components/Dashboard';
+import { Dashboard, type ScheduleStatus } from './components/Dashboard';
+import { SegmentedControl } from './components/SegmentedControl';
 import { SettingsPanel } from './components/SettingsPanel';
 import { Gallery } from './components/Gallery';
 import { EyeSymbol } from './components/symbols';
@@ -38,6 +43,19 @@ const SETTINGS_KEY = 'blinkbreak.settings.v1';
 
 function todayKey(d = new Date()): string {
   return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
+}
+
+const TABS = [
+  { id: 'today', label: 'Today' },
+  { id: 'gallery', label: 'Reminders' },
+  { id: 'settings', label: 'Settings' },
+] as const;
+type Tab = (typeof TABS)[number]['id'];
+
+/** "22:00" → the viewer's own clock format, e.g. "10:00 PM". */
+function formatTimeOfDay(hhmm: string): string {
+  const [h, m] = hhmm.split(':').map(Number);
+  return new Date(2000, 0, 1, h, m).toLocaleTimeString([], { hour: 'numeric', minute: '2-digit' });
 }
 
 function freshStats(): DayStats {
@@ -63,10 +81,14 @@ export default function App() {
     }
   });
   const [activeReminder, setActiveReminder] = useState<{ kind: ReminderKind } | null>(null);
-  const [tab, setTab] = useState<'today' | 'gallery' | 'settings'>('today');
+  const [tab, setTab] = useState<Tab>('today');
   const [windowLabel, setWindowLabel] = useState('main');
   const resolvedTheme = useResolvedTheme(settings.theme);
   useApplyTheme(resolvedTheme, windowLabel !== 'reminder');
+  const reducedMotion = useReducedMotion(settings.reducedMotion);
+  useEffect(() => {
+    document.documentElement.classList.toggle('bb-reduce-motion', reducedMotion);
+  }, [reducedMotion]);
   const schedRef = useRef<SchedulerState>(createSchedulerState());
   const reminderVisibleRef = useRef(false);
   const presentingReminderRef = useRef(false);
@@ -98,6 +120,7 @@ export default function App() {
       }
 
       const showLocal = () => {
+        if (chimeFor(reminder.kind, settings)) playChime(settings.sound.volume);
         reminderVisibleRef.current = true;
         setActiveReminder({ kind: reminder.kind });
       };
@@ -114,8 +137,10 @@ export default function App() {
             snoozeSec: settings.reminders[reminder.kind].snoozeSec,
             presentation: presentationFor(reminder.kind),
             expiryAction: expiryActionFor(reminder.kind),
-            reducedMotion: settings.reducedMotion,
+            reducedMotion,
             theme: resolvedTheme,
+            chime: chimeFor(reminder.kind, settings),
+            volume: settings.sound.volume,
           });
         } catch {
           reminderVisibleRef.current = false;
@@ -205,11 +230,14 @@ export default function App() {
     return () => window.clearInterval(id);
   }, [settings, windowLabel]);
 
-  const nextIn = useMemo(
-    () => nextDueInSec(schedRef.current, settings, Date.now()),
+  const status = useMemo((): ScheduleStatus => {
+    const now = Date.now();
+    if (isPaused(settings, now)) return { state: 'paused', untilMs: settings.pauseUntilMs! };
+    if (inQuietHours(settings, new Date(now))) return { state: 'quiet', until: formatTimeOfDay(settings.quietHours.end) };
+    const next = nextDue(schedRef.current, settings, now);
+    return next ? { state: 'active', next } : { state: 'off' };
     // eslint-disable-next-line react-hooks/exhaustive-deps
-    [settings, stats.activeSec, activeReminder],
-  );
+  }, [settings, stats.activeSec, activeReminder]);
 
   const handleAction = (a: CardAction) => {
     if (!activeReminder) return;
@@ -232,15 +260,14 @@ export default function App() {
     handleBreakNowRef.current = handleBreakNow;
   });
 
-  const paused = isPaused(settings, Date.now());
+  const changeAutostart = async (enabled: boolean) => {
+    await setAutostartEnabled(enabled);
+    setSettings((s) => ({ ...s, autostart: enabled }));
+  };
+  // Reset restores recommended reminders but keeps the real Windows startup choice.
+  const resetSettings = () => setSettings((s) => ({ ...cloneSettings(DEFAULT_SETTINGS), autostart: s.autostart }));
 
   if (windowLabel === 'reminder') return <NativeReminder />;
-
-  const tabs = [
-    { id: 'today', label: 'Today' },
-    { id: 'gallery', label: 'Reminders' },
-    { id: 'settings', label: 'Settings' },
-  ] as const;
 
   return (
     <div className="bb-shell">
@@ -249,25 +276,15 @@ export default function App() {
           <span className="bb-brand-mark" aria-hidden="true"><EyeSymbol t={0} durationSec={10} still /></span>
           <h1>BlinkBreak</h1>
         </div>
-        <nav className="bb-segmented" aria-label="Sections">
-          {tabs.map(({ id, label }) => (
-            <button
-              key={id}
-              className={tab === id ? 'is-active' : ''}
-              aria-pressed={tab === id}
-              data-testid={`tab-${id}`}
-              onClick={() => setTab(id)}
-            >
-              {label}
-            </button>
-          ))}
+        <nav aria-label="Sections">
+          <SegmentedControl label="Sections" testPrefix="tab" value={tab} options={TABS} onChange={setTab} />
         </nav>
       </header>
 
       {activeReminder && presentationFor(activeReminder.kind) === 'toast' && (
         <BlinkToast
           durationSec={settings.reminders[activeReminder.kind].durationSec}
-          reducedMotion={settings.reducedMotion}
+          reducedMotion={reducedMotion}
           onAction={handleAction}
         />
       )}
@@ -278,7 +295,7 @@ export default function App() {
           body={REMINDER_META[activeReminder.kind].body}
           durationSec={settings.reminders[activeReminder.kind].durationSec}
           snoozeSec={settings.reminders[activeReminder.kind].snoozeSec}
-          reducedMotion={settings.reducedMotion}
+          reducedMotion={reducedMotion}
           onAction={handleAction}
         />
       )}
@@ -287,8 +304,7 @@ export default function App() {
         {tab === 'today' && (
           <Dashboard
             activeSec={stats.activeSec}
-            nextInSec={nextIn}
-            paused={paused}
+            status={status}
             stats={stats}
             onBreakNow={handleBreakNow}
             onPause={(min) => setSettings((s) => ({ ...s, pauseUntilMs: Date.now() + min * 60_000 }))}
@@ -297,7 +313,13 @@ export default function App() {
         )}
         {tab === 'gallery' && <Gallery settings={settings} />}
         {tab === 'settings' && (
-          <SettingsPanel settings={settings} onChange={setSettings} onReset={() => setSettings(cloneSettings(DEFAULT_SETTINGS))} />
+          <SettingsPanel
+            settings={settings}
+            onChange={setSettings}
+            onReset={resetSettings}
+            autostartAvailable={isTauriRuntime()}
+            onAutostartChange={changeAutostart}
+          />
         )}
       </main>
 

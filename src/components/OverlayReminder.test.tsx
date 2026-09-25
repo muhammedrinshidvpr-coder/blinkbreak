@@ -2,7 +2,7 @@ import { act, fireEvent, render, screen } from '@testing-library/react';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import type { ReminderKind } from '../lib/types';
 import { OverlayReminder } from './OverlayReminder';
-import { EXIT_MS } from './useSettleOnce';
+import { EXIT_MS, REDUCED_EXIT_MS } from './useSettleOnce';
 
 function renderOverlay({ kind = 'posture' as ReminderKind, durationSec = 10, snoozeSec = 900, reducedMotion = false } = {}) {
   const onAction = vi.fn();
@@ -71,10 +71,32 @@ describe('OverlayReminder', () => {
     expect(onAction).toHaveBeenCalledWith('done');
   });
 
-  it('settles immediately with reduced motion', () => {
+  it('settles after a short fade with reduced motion', () => {
     const onAction = renderOverlay({ reducedMotion: true });
     fireEvent.click(screen.getByTestId('reminder-done'));
+    act(() => vi.advanceTimersByTime(REDUCED_EXIT_MS));
     expect(onAction).toHaveBeenCalledWith('done');
+  });
+
+  it('is a focused dialog in the browser and gives focus back when it closes', () => {
+    const opener = document.createElement('button');
+    document.body.append(opener);
+    opener.focus();
+    const { unmount } = render(
+      <OverlayReminder kind="posture" title="Sit tall" body="b" durationSec={20} snoozeSec={900} onAction={vi.fn()} />,
+    );
+    expect(screen.getByRole('dialog', { name: 'Sit tall' })).toHaveFocus();
+    fireEvent.keyDown(window, { key: 'Tab', shiftKey: true });
+    expect(screen.getByTestId('reminder-snooze')).toHaveFocus(); // focus wraps inside the card
+    unmount();
+    expect(opener).toHaveFocus();
+    opener.remove();
+  });
+
+  it('never takes focus in the native window (it must not steal typing)', () => {
+    render(<OverlayReminder kind="posture" title="Sit tall" body="b" durationSec={20} snoozeSec={900} onAction={vi.fn()} manageFocus={false} />);
+    expect(screen.queryByRole('dialog')).not.toBeInTheDocument();
+    expect(document.body).toHaveFocus();
   });
 
   it('keeps it quiet: two actions, real snooze length, no hint text', () => {

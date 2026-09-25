@@ -54,6 +54,11 @@ export function expiryActionFor(kind: ReminderKind): 'done' | 'skip' {
   return kind === 'blink' || kind === 'lookaway' ? 'done' : 'skip';
 }
 
+/** The optional chime is for the big breaks only; a sound every 5 minutes for blink would grate. */
+export function chimeFor(kind: ReminderKind, settings: Pick<AppSettings, 'sound'>): boolean {
+  return settings.sound.enabled && presentationFor(kind) === 'overlay';
+}
+
 /** Compact duration label: 45s, 5m, 1h 30m. */
 export function formatShortDuration(sec: number): string {
   if (sec < 60) return `${sec}s`;

@@ -1,12 +1,27 @@
-import { describe, it, expect, vi } from 'vitest';
-import { render, screen, fireEvent } from '@testing-library/react';
+import { afterEach, describe, it, expect, vi } from 'vitest';
+import { act, render, screen, fireEvent } from '@testing-library/react';
 import { ReminderCard } from './ReminderCard';
-import { Dashboard } from './Dashboard';
+import { Dashboard, type ScheduleStatus } from './Dashboard';
 import { SettingsPanel } from './SettingsPanel';
 import { BreathSymbol, EyeSymbol, HorizonSymbol, SpineSymbol, StretchSymbol, ProgressRing } from './symbols';
 import { Gallery } from './Gallery';
 import { NativeReminder } from './NativeReminder';
+import { EXIT_MS } from './useSettleOnce';
 import { DEFAULT_SETTINGS, cloneSettings } from '../lib/types';
+
+/** Pretend Windows has "Show animations" turned off. */
+function stubSystemReducedMotion(reduce: boolean) {
+  vi.stubGlobal('matchMedia', (query: string) => ({
+    matches: reduce && query.includes('reduced-motion'),
+    media: query,
+    addEventListener: () => undefined,
+    removeEventListener: () => undefined,
+  }));
+}
+
+afterEach(() => {
+  vi.unstubAllGlobals();
+});
 
 describe('reminder symbols', () => {
   it('eye closes during a blink and is open between blinks', () => {
@@ -56,6 +71,22 @@ describe('Gallery', () => {
     for (const k of ['blink', 'lookaway', 'posture', 'move', 'rest']) expect(screen.getByTestId(`gallery-${k}`)).toBeInTheDocument();
     expect(screen.getByTestId('gallery-lookaway')).toHaveTextContent('Every 20m · 20s');
   });
+
+  it('previews the real reminder locally and closes it on Done', () => {
+    vi.useFakeTimers();
+    render(<Gallery settings={cloneSettings(DEFAULT_SETTINGS)} />);
+    fireEvent.click(screen.getByTestId('gallery-preview-posture'));
+    expect(screen.getByRole('dialog', { name: 'Sit tall' })).toBeInTheDocument();
+    fireEvent.click(screen.getByTestId('reminder-done'));
+    act(() => vi.advanceTimersByTime(EXIT_MS));
+    expect(screen.queryByRole('dialog')).not.toBeInTheDocument();
+    vi.useRealTimers();
+  });
+
+  it('rests still until a tile is hovered or focused', () => {
+    render(<Gallery settings={cloneSettings(DEFAULT_SETTINGS)} />);
+    expect(screen.getByTestId('spine-mid').getAttribute('cx')).toBe('20');
+  });
 });
 
 describe('ReminderCard', () => {
@@ -72,6 +103,20 @@ describe('ReminderCard', () => {
     expect(screen.getByTestId('reminder-snooze')).toHaveAccessibleName('Snooze 10m');
   });
 
+  it('holds the calm still pose when Windows asks for less motion, even if the app setting is off', () => {
+    stubSystemReducedMotion(true);
+    render(<ReminderCard kind="posture" title="t" body="b" durationSec={20} onAction={vi.fn()} />);
+    expect(screen.getByTestId('spine-mid').getAttribute('cx')).toBe('20');
+  });
+
+  it('shows a visible time left only for long breaks', () => {
+    const { rerender } = render(<ReminderCard kind="rest" title="t" body="b" durationSec={600} onAction={vi.fn()} />);
+    expect(screen.getByTestId('reminder-countdown')).toHaveClass('bb-duration');
+    expect(screen.getByTestId('reminder-countdown')).toHaveTextContent('10:00 left');
+    rerender(<ReminderCard kind="lookaway" title="t" body="b" durationSec={20} onAction={vi.fn()} />);
+    expect(screen.getByTestId('reminder-countdown')).toHaveClass('bb-sr-only');
+  });
+
   it('renders the matching symbol per kind', () => {
     const onAction = vi.fn();
     const { rerender } = render(<ReminderCard kind="posture" title="t" body="b" durationSec={20} onAction={onAction} />);
@@ -80,7 +125,7 @@ describe('ReminderCard', () => {
     expect(screen.getByTestId('stretch-arms')).toBeInTheDocument();
     rerender(<ReminderCard kind="rest" title="t" body="b" durationSec={600} onAction={onAction} />);
     expect(screen.getByTestId('breath-circle')).toBeInTheDocument();
-    expect(screen.getByText(/Breathe (in|out)/)).toBeInTheDocument();
+    expect(screen.getByText(/Breathe (in|out)|Hold gently/)).toBeInTheDocument();
   });
 });
 
@@ -92,20 +137,33 @@ describe('NativeReminder', () => {
 });
 
 describe('Dashboard', () => {
+  const stats = { date: '2026-09-24', activeSec: 60, shown: {}, completed: {}, skipped: {}, snoozed: {} };
+  const renderDash = (status: ScheduleStatus, handlers: { onPause?: () => void; onResume?: () => void } = {}) =>
+    render(<Dashboard activeSec={90} status={status} stats={stats} onBreakNow={vi.fn()} onPause={handlers.onPause ?? vi.fn()} onResume={handlers.onResume ?? vi.fn()} />);
+
   it('pause/resume buttons work', () => {
     const onPause = vi.fn();
     const onResume = vi.fn();
-    const stats = { date: '2026-09-24', activeSec: 60, shown: {}, completed: {}, skipped: {}, snoozed: {} };
-    const { rerender } = render(
-      <Dashboard activeSec={90} nextInSec={300} paused={false} stats={stats} onBreakNow={vi.fn()} onPause={onPause} onResume={onResume} />,
-    );
+    const { unmount } = renderDash({ state: 'active', next: { kind: 'lookaway', inSec: 300 } }, { onPause });
     fireEvent.click(screen.getByTestId('dash-pause-15'));
     expect(onPause).toHaveBeenCalledWith(15);
-    rerender(
-      <Dashboard activeSec={90} nextInSec={null} paused={true} stats={stats} onBreakNow={vi.fn()} onPause={onPause} onResume={onResume} />,
-    );
+    unmount();
+    renderDash({ state: 'paused', untilMs: Date.now() + 60_000 }, { onResume });
     fireEvent.click(screen.getByTestId('dash-resume'));
     expect(onResume).toHaveBeenCalled();
+  });
+
+  it('names the next reminder and explains why nothing is coming', () => {
+    const { unmount } = renderDash({ state: 'active', next: { kind: 'lookaway', inSec: 290 } });
+    expect(screen.getByRole('heading', { name: 'Look far away' })).toBeInTheDocument();
+    expect(screen.getByTestId('dash-next')).toHaveTextContent('in 5m');
+    unmount();
+    const quiet = renderDash({ state: 'quiet', until: '8:00 AM' });
+    expect(screen.getByText('Quiet hours')).toBeInTheDocument();
+    expect(screen.getByTestId('dash-next')).toHaveTextContent('until 8:00 AM');
+    quiet.unmount();
+    renderDash({ state: 'off' });
+    expect(screen.getByText('All reminders are off')).toBeInTheDocument();
   });
 });
 
@@ -116,14 +174,52 @@ describe('SettingsPanel', () => {
     render(<SettingsPanel settings={s} onChange={onChange} onReset={vi.fn()} />);
     fireEvent.click(screen.getByTestId('settings-enabled-blink'));
     expect(onChange).toHaveBeenCalled();
-    fireEvent.change(screen.getByTestId('settings-interval-blink'), { target: { value: '10' } });
+    const field = screen.getByTestId('settings-interval-blink');
+    fireEvent.change(field, { target: { value: '10' } });
+    fireEvent.blur(field);
     const updated = onChange.mock.calls.map((c) => c[0]).pop();
     expect(updated.reminders.blink.intervalSec).toBe(600);
   });
 
-  it('edits quiet-hours start and end times and has no dead card-position setting', () => {
+  it('lets an interval be cleared while typing, then clamps or restores it on commit', () => {
     const onChange = vi.fn();
     render(<SettingsPanel settings={cloneSettings(DEFAULT_SETTINGS)} onChange={onChange} onReset={vi.fn()} />);
+    const field = screen.getByTestId('settings-interval-blink') as HTMLInputElement;
+    fireEvent.change(field, { target: { value: '' } });
+    expect(field.value).toBe(''); // no jump to "1" mid-edit
+    fireEvent.blur(field);
+    expect(field.value).toBe('5');
+    expect(onChange).not.toHaveBeenCalled();
+
+    fireEvent.change(field, { target: { value: '999' } });
+    fireEvent.keyDown(field, { key: 'Enter' });
+    expect(field.value).toBe('480');
+    expect(onChange.mock.lastCall?.[0].reminders.blink.intervalSec).toBe(480 * 60);
+  });
+
+  it('moves the theme with arrow keys like a native radio group', () => {
+    const onChange = vi.fn();
+    render(<SettingsPanel settings={cloneSettings(DEFAULT_SETTINGS)} onChange={onChange} onReset={vi.fn()} />);
+    const system = screen.getByTestId('settings-theme-system');
+    expect(screen.getByTestId('settings-theme-light')).toHaveAttribute('tabindex', '-1');
+    fireEvent.keyDown(system, { key: 'ArrowRight' });
+    expect(onChange.mock.lastCall?.[0].theme).toBe('light');
+    expect(screen.getByTestId('settings-theme-light')).toHaveFocus();
+    fireEvent.keyDown(system, { key: 'End' });
+    expect(onChange.mock.lastCall?.[0].theme).toBe('dark');
+  });
+
+  it('disables quiet-hour times while quiet hours are off', () => {
+    render(<SettingsPanel settings={cloneSettings(DEFAULT_SETTINGS)} onChange={vi.fn()} onReset={vi.fn()} />);
+    expect(screen.getByTestId('settings-quiet-start')).toBeDisabled();
+    expect(screen.getByTestId('settings-quiet-end')).toBeDisabled();
+  });
+
+  it('edits quiet-hours start and end times and has no dead card-position setting', () => {
+    const onChange = vi.fn();
+    const s = cloneSettings(DEFAULT_SETTINGS);
+    s.quietHours.enabled = true;
+    render(<SettingsPanel settings={s} onChange={onChange} onReset={vi.fn()} />);
     fireEvent.change(screen.getByTestId('settings-quiet-start'), { target: { value: '21:30' } });
     expect(onChange.mock.lastCall?.[0].quietHours.start).toBe('21:30');
     fireEvent.change(screen.getByTestId('settings-quiet-end'), { target: { value: '07:15' } });
@@ -139,15 +235,29 @@ describe('SettingsPanel', () => {
     expect(onChange.mock.lastCall?.[0].theme).toBe('dark');
   });
 
-  it('exposes a Windows autostart toggle that persists the setting', () => {
-    const onChange = vi.fn();
-    const s = cloneSettings(DEFAULT_SETTINGS);
-    render(<SettingsPanel settings={s} onChange={onChange} onReset={vi.fn()} />);
+  it('asks Windows to change autostart and waits while it does', async () => {
+    let finish!: () => void;
+    const onAutostartChange = vi.fn(() => new Promise<void>((resolve) => { finish = resolve; }));
+    render(<SettingsPanel settings={cloneSettings(DEFAULT_SETTINGS)} onChange={vi.fn()} onReset={vi.fn()} autostartAvailable onAutostartChange={onAutostartChange} />);
     const toggle = screen.getByTestId('settings-autostart');
-    expect(toggle).toBeInTheDocument();
     fireEvent.click(toggle);
-    expect(onChange).toHaveBeenCalled();
-    const updated = onChange.mock.calls.map((c) => c[0]).pop();
-    expect(updated.autostart).toBe(!DEFAULT_SETTINGS.autostart);
+    expect(onAutostartChange).toHaveBeenCalledWith(!DEFAULT_SETTINGS.autostart);
+    expect(toggle).toBeDisabled();
+    await act(async () => finish());
+    expect(toggle).toBeEnabled();
+    expect(screen.queryByTestId('settings-autostart-error')).not.toBeInTheDocument();
+  });
+
+  it('says so when Windows refuses the autostart change', async () => {
+    const onAutostartChange = vi.fn(() => Promise.reject(new Error('denied')));
+    render(<SettingsPanel settings={cloneSettings(DEFAULT_SETTINGS)} onChange={vi.fn()} onReset={vi.fn()} autostartAvailable onAutostartChange={onAutostartChange} />);
+    await act(async () => { fireEvent.click(screen.getByTestId('settings-autostart')); });
+    expect(screen.getByTestId('settings-autostart-error')).toHaveTextContent("Windows didn't accept");
+  });
+
+  it('turns off the autostart switch outside the desktop app', () => {
+    render(<SettingsPanel settings={cloneSettings(DEFAULT_SETTINGS)} onChange={vi.fn()} onReset={vi.fn()} />);
+    expect(screen.getByTestId('settings-autostart')).toBeDisabled();
+    expect(screen.getByText('Available in the desktop app.')).toBeInTheDocument();
   });
 });

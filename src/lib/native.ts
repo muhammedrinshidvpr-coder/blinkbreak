@@ -12,6 +12,10 @@ export interface ReminderPayload {
   /** Sent with each reminder: the reminder window's own settings copy is only read at startup. */
   reducedMotion: boolean;
   theme: ResolvedTheme;
+  /** Play the soft chime when the reminder appears. */
+  chime: boolean;
+  /** Chime level 0..1. */
+  volume: number;
 }
 
 type TauriWindow = Window & { __TAURI_INTERNALS__?: unknown };

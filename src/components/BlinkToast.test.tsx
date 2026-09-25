@@ -2,7 +2,7 @@ import { act, fireEvent, render, screen } from '@testing-library/react';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { BlinkToast } from './BlinkToast';
 import { NativeReminder } from './NativeReminder';
-import { EXIT_MS } from './useSettleOnce';
+import { EXIT_MS, REDUCED_EXIT_MS } from './useSettleOnce';
 
 beforeEach(() => {
   vi.useFakeTimers();
@@ -30,11 +30,11 @@ describe('BlinkToast', () => {
     expect(onAction).toHaveBeenCalledWith('done');
   });
 
-  it('click on the emoji is done, × is skip, and only the first one counts', () => {
+  it('the eye button is done, × is skip, and only the first one counts', () => {
     const onAction = vi.fn();
     render(<BlinkToast durationSec={10} onAction={onAction} />);
     fireEvent.click(screen.getByTestId('blink-toast-skip'));
-    fireEvent.click(screen.getByTestId('blink-toast'));
+    fireEvent.click(screen.getByRole('button', { name: 'Complete blink reminder' }));
     act(() => vi.advanceTimersByTime(20_000));
     expect(onAction).toHaveBeenCalledOnce();
     expect(onAction).toHaveBeenCalledWith('skip');
@@ -42,17 +42,21 @@ describe('BlinkToast', () => {
 
   it('says only two words and times its ring to the full duration', () => {
     render(<BlinkToast durationSec={10} onAction={vi.fn()} />);
-    expect(screen.getByTestId('blink-toast')).toHaveTextContent(/^Blink slowly$/);
+    expect(screen.getByRole('button', { name: 'Complete blink reminder' })).toHaveTextContent(/^Blink slowly$/);
+    expect(screen.getAllByRole('button')).toHaveLength(2); // done + skip, both reachable by keyboard
     const ring = screen.getByTestId('progress-ring').closest('.bb-ring') as HTMLElement;
     expect(ring.style.getPropertyValue('--bb-duration')).toBe('10s');
     expect(screen.getByTestId('eye-symbol')).toBeInTheDocument();
   });
 
-  it('reduced motion disables animation and settles without delay', () => {
+  it('reduced motion disables animation and settles after a short fade', () => {
     const onAction = vi.fn();
     render(<BlinkToast durationSec={5} reducedMotion onAction={onAction} />);
     expect(screen.getByTestId('blink-toast')).toHaveClass('reduced-motion');
-    fireEvent.click(screen.getByTestId('blink-toast'));
+    fireEvent.click(screen.getByRole('button', { name: 'Complete blink reminder' }));
+    expect(onAction).not.toHaveBeenCalled();
+    act(() => vi.advanceTimersByTime(REDUCED_EXIT_MS));
+    expect(onAction).toHaveBeenCalledOnce();
     expect(onAction).toHaveBeenCalledWith('done');
   });
 });
@@ -72,7 +76,7 @@ describe('NativeReminder routing', () => {
     render(<Routed />);
     await act(async () => {});
 
-    const base = { title: 't', body: 'b', durationSec: 10, snoozeSec: 600, reducedMotion: false, theme: 'dark' };
+    const base = { title: 't', body: 'b', durationSec: 10, snoozeSec: 600, reducedMotion: false, theme: 'dark', chime: false, volume: 0.4 };
     act(() => handlers[0]({ ...base, kind: 'blink', presentation: 'toast', expiryAction: 'done' }));
     expect(screen.getByTestId('blink-toast')).toBeInTheDocument();
     expect(screen.queryByTestId('reminder-overlay')).not.toBeInTheDocument();

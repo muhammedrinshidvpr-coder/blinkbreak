@@ -58,6 +58,11 @@ export function isInhaling(t: number, durationSec: number): boolean {
   return phase(t, periodFor(durationSec, 11)) < 5 / 11;
 }
 
+export function breathInstruction(t: number, durationSec: number): string {
+  const u = phase(t, periodFor(durationSec, 11));
+  return u < 4 / 11 ? 'Breathe in' : u < 5 / 11 ? 'Hold gently' : 'Breathe out';
+}
+
 /**
  * Generic "reach, hold, return" pose used by look-away (dot to horizon), posture (spine straightens),
  * and move (arms rise): 0 → 1 over the first 30 %, hold, back to 0 over the last 20 %.
