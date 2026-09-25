@@ -16,10 +16,10 @@ describe('BlinkToast', () => {
   it('counts down and closes by itself as done after the exit animation', () => {
     const onAction = vi.fn();
     render(<BlinkToast durationSec={10} onAction={onAction} />);
-    expect(screen.getByTestId('blink-toast-countdown')).toHaveTextContent('10s');
+    expect(screen.getByTestId('blink-toast')).toHaveAccessibleName('Blink slowly, 10 seconds left');
 
     act(() => vi.advanceTimersByTime(4_000));
-    expect(screen.getByTestId('blink-toast-countdown')).toHaveTextContent('6s');
+    expect(screen.getByTestId('blink-toast')).toHaveAccessibleName('Blink slowly, 6 seconds left');
 
     act(() => vi.advanceTimersByTime(6_000));
     expect(screen.getByTestId('blink-toast')).toHaveClass('is-leaving');
@@ -40,11 +40,12 @@ describe('BlinkToast', () => {
     expect(onAction).toHaveBeenCalledWith('skip');
   });
 
-  it('times the ring to the full duration and fits about four blinks', () => {
+  it('says only two words and times its ring to the full duration', () => {
     render(<BlinkToast durationSec={10} onAction={vi.fn()} />);
-    const toast = screen.getByTestId('blink-toast');
-    expect(toast.style.getPropertyValue('--bb-toast-duration')).toBe('10s');
-    expect(toast.style.getPropertyValue('--bb-blink-period')).toBe('2.5s');
+    expect(screen.getByTestId('blink-toast')).toHaveTextContent(/^Blink slowly$/);
+    const ring = screen.getByTestId('progress-ring').closest('.bb-ring') as HTMLElement;
+    expect(ring.style.getPropertyValue('--bb-duration')).toBe('10s');
+    expect(screen.getByTestId('eye-symbol')).toBeInTheDocument();
   });
 
   it('reduced motion disables animation and settles without delay', () => {
@@ -71,14 +72,15 @@ describe('NativeReminder routing', () => {
     render(<Routed />);
     await act(async () => {});
 
-    const base = { title: 't', body: 'b', durationSec: 10, snoozeSec: 600, reducedMotion: false };
+    const base = { title: 't', body: 'b', durationSec: 10, snoozeSec: 600, reducedMotion: false, theme: 'dark' };
     act(() => handlers[0]({ ...base, kind: 'blink', presentation: 'toast', expiryAction: 'done' }));
     expect(screen.getByTestId('blink-toast')).toBeInTheDocument();
     expect(screen.queryByTestId('reminder-overlay')).not.toBeInTheDocument();
 
     act(() => handlers[0]({ ...base, kind: 'lookaway', presentation: 'overlay', expiryAction: 'done' }));
     expect(screen.getByTestId('reminder-overlay')).toBeInTheDocument();
-    expect(screen.getByTestId('reminder-snooze')).toHaveTextContent('Snooze 10m');
+    expect(screen.getByTestId('reminder-snooze')).toHaveAccessibleName('Snooze 10m');
+    expect(document.documentElement.dataset.theme).toBe('dark'); // theme travels with the payload
     vi.doUnmock('../lib/native');
   });
 

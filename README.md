@@ -1,51 +1,58 @@
 <div align="center">
 
-# BlinkBreak 👁️
+# BlinkBreak
 
-**Gentle cartoon reminders to blink, look away, and move.**<br>
-A tiny, private Windows tray app for long screen sessions.
+**Calm reminders to blink, look away, and move.**<br>
+A small, private Windows app for long screen sessions.
 
-[![Download for Windows](https://img.shields.io/badge/Download-Windows%20installer-2aa8a0?style=for-the-badge&logo=windows)](https://github.com/muhammedrinshidvpr-coder/blinkbreak/releases/latest)
+[![Download for Windows](https://img.shields.io/badge/Download-Windows-1d1d1f?style=for-the-badge&logo=windows)](https://github.com/muhammedrinshidvpr-coder/blinkbreak/releases/latest)
 
-[![Latest release](https://img.shields.io/github/v/release/muhammedrinshidvpr-coder/blinkbreak)](https://github.com/muhammedrinshidvpr-coder/blinkbreak/releases/latest)
+[![Latest release](https://img.shields.io/github/v/release/muhammedrinshidvpr-coder/blinkbreak?color=7f9f8f)](https://github.com/muhammedrinshidvpr-coder/blinkbreak/releases/latest)
 [![Build](https://github.com/muhammedrinshidvpr-coder/blinkbreak/actions/workflows/build-windows.yml/badge.svg)](https://github.com/muhammedrinshidvpr-coder/blinkbreak/actions/workflows/build-windows.yml)
-![License: MIT](https://img.shields.io/badge/license-MIT-green)
-![Windows 10 | 11](https://img.shields.io/badge/Windows-10%20%7C%2011-0078d4)
+![License: MIT](https://img.shields.io/badge/license-MIT-7f9f8f)
 
-<img src="docs/screenshots/blink-demo.gif" alt="The blink reminder drops in at the top of the screen, blinks slowly, counts down, and floats away" width="520">
+<img src="docs/screenshots/blink-demo.gif" alt="A small pill at the top of the screen: an eye blinks slowly inside a thin ring that drains, then the pill fades away" width="480">
 
 </div>
 
 ## Why BlinkBreak?
 
-- 🔒 **Private by design.** No internet, no account, no tracking. Nothing ever leaves your PC.
-- 🤫 **Never gets in your way.** Reminders don't steal your typing, and they wait while you're in a fullscreen game, video, or presentation.
-- ⏱️ **Closes by itself.** Every reminder leaves on its own when its time is up. There's nothing to click away.
+- **Private.** No internet, no account, no tracking. Nothing leaves your PC.
+- **Quiet.** Reminders never take your keyboard focus, and they wait while a fullscreen game, video, or presentation is open.
+- **Brief.** Every reminder leaves on its own when its time is up.
 
-## What it reminds you to do
+## Reminders
 
-<img src="docs/screenshots/cartoons.png" alt="Cartoon reminders: blink, look away, posture reset, move and stretch" width="100%">
+Each reminder is a small symbol whose motion *is* the exercise. It is timed to
+fit the reminder exactly, and a thin ring shows the time left.
 
-| Reminder | Every (active use) | Shown for | Looks like |
+<p align="center">
+  <img src="docs/screenshots/lookaway-demo.gif" alt="Look far away: a dot drifts out to a thin horizon line" width="300">
+  &nbsp;&nbsp;
+  <img src="docs/screenshots/rest-demo.gif" alt="Step away, in dark mode: a circle breathes in and out" width="300">
+</p>
+
+| Reminder | Every (active use) | For | Motion |
 |---|---|---|---|
-| 👁️ Blink | 5 min | 10 s | a little emoji at the top center that blinks with you |
-| 🏔️ Look away | 20 min | 20 s (the 20-20-20 rule) | overlay with mountains and a countdown |
-| 🪑 Posture | 30 min | 20 s | overlay with a character sitting tall |
-| 🤸 Move | 60 min | 5 min | overlay with a stretching character |
-| ☕ Long rest | 2 h | 10 min | overlay suggesting a proper break |
+| Blink | 5 min | 10 s | an eye lowers its lid, rests, and lifts: four slow blinks |
+| Look away | 20 min | 20 s | a dot drifts out to the horizon (the 20-20-20 rule) |
+| Posture | 30 min | 20 s | a curved column of dots eases upright |
+| Move | 60 min | 5 min | arms lift in one slow arc |
+| Long rest | 2 h | 10 min | a circle breathes: in for 4 s, out for 6 s |
 
-Timers count **active use only**, so they pause when you step away or your PC
-sleeps. Every interval, quiet hours, reduced motion, and start-with-Windows
-can be changed in **Settings**.
+Timers count **active use only**, so they pause when you step away or your PC sleeps.
+**Done** records the break, **Later** snoozes it (the length is shown), and clicking
+anywhere outside the card dismisses it. When time runs out, blink and look-away
+count as done, because following the countdown *is* the exercise.
 
-The overlay reminders gently dim the monitor you're using:
+## Light and dark
 
-<img src="docs/screenshots/overlay.png" alt="Look-away reminder overlay with Done, Snooze 10m and Skip buttons" width="720">
+BlinkBreak follows Windows by default. Choose **Settings → Appearance → Light** or **Dark** to set it yourself.
 
-**Done** records the break, **Snooze** shows its real length (10m, 15m, 30m…),
-and **Skip** (or clicking outside the card) dismisses it. When time runs out,
-blink and look-away count as done (following the countdown *is* the exercise).
-The others count as skipped.
+<p align="center">
+  <img src="docs/screenshots/app-light.png" alt="Reminders tab in the light theme" width="49%">
+  <img src="docs/screenshots/app-dark.png" alt="Settings in the dark theme" width="49%">
+</p>
 
 ## Install
 
@@ -80,7 +87,7 @@ going where it was.
 
 Tray icon → **Pause 15 min**, or open the dashboard for **Pause 1h**. In
 **Settings** you can switch each reminder on/off, change how often it
-appears, and set quiet hours.
+appears, set quiet hours, and pick light or dark.
 </details>
 
 <details>
@@ -142,7 +149,7 @@ Built with [Tauri 2](https://tauri.app), React, TypeScript, and Rust.
 
 ## Contributing
 
-Ideas, bug reports, cartoons, and PRs are all welcome. Good places to start are
+Ideas, bug reports, designs, and PRs are all welcome. Good places to start are
 issues labelled
 [`good first issue`](https://github.com/muhammedrinshidvpr-coder/blinkbreak/labels/good%20first%20issue).
 See [CONTRIBUTING.md](CONTRIBUTING.md) and the

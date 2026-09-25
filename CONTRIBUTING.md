@@ -36,8 +36,8 @@ npm run tauri build
 
 | Path | What lives there |
 |---|---|
-| `src/lib/` | Pure logic: scheduler, activity classification, types, Tauri bridge |
-| `src/components/` | UI: blink toast, overlay, reminder card, cartoons, dashboard, settings |
+| `src/lib/` | Pure logic: scheduler, activity classification, motion timeline, theme, types, Tauri bridge |
+| `src/components/` | UI: blink toast, overlay, reminder card, symbols, dashboard, settings |
 | `src-tauri/src/lib.rs` | Native shell: tray, idle time, reminder window + close watchdog, fullscreen check |
 | `.github/workflows/` | CI on every push and PR; `release.yml` publishes installers for version tags |
 | `scripts/release-notes.mjs` | Builds release notes from `CHANGELOG.md` + installer checksums |

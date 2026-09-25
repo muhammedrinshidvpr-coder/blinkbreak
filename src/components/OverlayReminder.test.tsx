@@ -64,7 +64,7 @@ describe('OverlayReminder', () => {
     const onAction = renderOverlay({ durationSec: 1 });
 
     fireEvent.click(screen.getByTestId('reminder-done'));
-    fireEvent.click(screen.getByTestId('reminder-skip'));
+    fireEvent.click(screen.getByTestId('reminder-overlay'));
     act(() => vi.advanceTimersByTime(1_000 + EXIT_MS));
 
     expect(onAction).toHaveBeenCalledOnce();
@@ -77,9 +77,11 @@ describe('OverlayReminder', () => {
     expect(onAction).toHaveBeenCalledWith('done');
   });
 
-  it('labels snooze with the real snooze length and no Esc hint', () => {
+  it('keeps it quiet: two actions, real snooze length, no hint text', () => {
     renderOverlay({ snoozeSec: 30 * 60 });
-    expect(screen.getByTestId('reminder-snooze')).toHaveTextContent('Snooze 30m');
-    expect(screen.queryByText(/Esc/)).not.toBeInTheDocument();
+    expect(screen.getByTestId('reminder-snooze')).toHaveAccessibleName('Snooze 30m');
+    expect(screen.getByTestId('reminder-snooze')).toHaveTextContent('Later 30m');
+    expect(screen.getAllByRole('button')).toHaveLength(2);
+    expect(screen.queryByText(/Esc|click outside/i)).not.toBeInTheDocument();
   });
 });

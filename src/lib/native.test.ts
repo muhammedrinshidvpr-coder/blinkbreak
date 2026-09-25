@@ -21,7 +21,7 @@ describe('native bridge outside Tauri (browser/jsdom)', () => {
 
   it('reminder invoke paths safely report unavailable', async () => {
     await expect(showNativeReminder({
-      kind: 'blink', title: 't', body: 'b', durationSec: 10, snoozeSec: 300, presentation: 'toast', expiryAction: 'done', reducedMotion: false,
+      kind: 'blink', title: 't', body: 'b', durationSec: 10, snoozeSec: 300, presentation: 'toast', expiryAction: 'done', reducedMotion: false, theme: 'light',
     })).resolves.toBe(false);
     await expect(hideNativeReminder()).resolves.toBeUndefined();
     await expect(isFullscreenActive()).resolves.toBe(false);

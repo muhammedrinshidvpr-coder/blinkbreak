@@ -1,12 +1,12 @@
 import { useEffect, useRef, useState } from 'react';
 import { formatShortDuration, type ReminderKind } from '../lib/types';
-import { BlinkEye } from './cartoon/BlinkEye';
-import { LookAway } from './cartoon/LookAway';
-import { PostureReset } from './cartoon/PostureReset';
-import { MoveStretch } from './cartoon/MoveStretch';
+import { isInhaling } from '../lib/timeline';
+import { ProgressRing, ReminderSymbol } from './symbols';
+import { useElapsed } from './useElapsed';
 
 export type CardAction = 'done' | 'skip' | 'snooze';
 
+/** Symbol in a draining ring, a title, one quiet line, and two actions. */
 export function ReminderCard({
   kind,
   title,
@@ -29,6 +29,7 @@ export function ReminderCard({
   const [left, setLeft] = useState(durationSec);
   const expiredRef = useRef(false);
   const onExpireRef = useRef(onExpire);
+  const t = useElapsed(!reducedMotion);
 
   useEffect(() => {
     onExpireRef.current = onExpire;
@@ -56,31 +57,28 @@ export function ReminderCard({
   const remaining = left >= 60
     ? `${Math.floor(left / 60)}:${String(left % 60).padStart(2, '0')}`
     : `${left}s`;
-  const progress = durationSec > 0 ? Math.min(100, Math.max(0, (left / durationSec) * 100)) : 0;
+  const line = kind === 'rest' && !reducedMotion ? (isInhaling(t, durationSec) ? 'Breathe in' : 'Breathe out') : body;
+  const snooze = formatShortDuration(snoozeSec);
 
   return (
-    <div className={`bb-reminder ${reducedMotion ? 'reduced-motion' : ''}`} data-testid={`reminder-${kind}`} role="alertdialog" aria-label={title}>
-      <div className="bb-stage">
-        {kind === 'blink' && <BlinkEye reducedMotion={reducedMotion} />}
-        {kind === 'lookaway' && <LookAway reducedMotion={reducedMotion} />}
-        {kind === 'posture' && <PostureReset reducedMotion={reducedMotion} />}
-        {(kind === 'move' || kind === 'rest') && <MoveStretch reducedMotion={reducedMotion} />}
-      </div>
-      <h2 style={{ margin: '4px 0' }}>{title}</h2>
-      <p style={{ margin: '4px 0' }}>{body}</p>
-      <div className="bb-count-row">
-        <p className="bb-count" data-testid="reminder-countdown" aria-live="polite">
-          {remaining} left
-        </p>
-        <span>Closes automatically</span>
-      </div>
-      <div className="bb-timer-track" aria-hidden="true">
-        <span style={{ width: `${progress}%` }} />
-      </div>
-      <div className="bb-row">
+    <div className="bb-reminder" data-kind={kind} data-testid={`reminder-${kind}`} role="alertdialog" aria-label={title}>
+      <ProgressRing durationSec={durationSec} size={92}>
+        <ReminderSymbol kind={kind} t={t} durationSec={durationSec} still={reducedMotion} />
+      </ProgressRing>
+      <h2>{title}</h2>
+      <p key={line} className="bb-reminder-line">{line}</p>
+      <span className="bb-sr-only" data-testid="reminder-countdown">{remaining} left</span>
+      <div className="bb-actions">
         <button className="bb-btn primary" data-testid="reminder-done" onClick={() => onAction('done')}>Done</button>
-        <button className="bb-btn" data-testid="reminder-snooze" onClick={() => onAction('snooze')}>Snooze {formatShortDuration(snoozeSec)}</button>
-        <button className="bb-btn ghost" data-testid="reminder-skip" onClick={() => onAction('skip')}>Skip</button>
+        <button
+          className="bb-btn quiet"
+          data-testid="reminder-snooze"
+          aria-label={`Snooze ${snooze}`}
+          title={`Remind me in ${snooze}`}
+          onClick={() => onAction('snooze')}
+        >
+          Later <span className="bb-btn-meta">{snooze}</span>
+        </button>
       </div>
     </div>
   );

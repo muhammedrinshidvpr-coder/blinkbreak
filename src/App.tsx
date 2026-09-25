@@ -24,15 +24,14 @@ import {
   showNativeReminder,
 } from './lib/native';
 import type { CardAction } from './components/ReminderCard';
+import { useApplyTheme, useResolvedTheme } from './lib/theme';
 import { NativeReminder } from './components/NativeReminder';
 import { OverlayReminder } from './components/OverlayReminder';
 import { BlinkToast } from './components/BlinkToast';
 import { Dashboard } from './components/Dashboard';
 import { SettingsPanel } from './components/SettingsPanel';
-import { BlinkEye } from './components/cartoon/BlinkEye';
-import { LookAway } from './components/cartoon/LookAway';
-import { PostureReset } from './components/cartoon/PostureReset';
-import { MoveStretch } from './components/cartoon/MoveStretch';
+import { Gallery } from './components/Gallery';
+import { EyeSymbol } from './components/symbols';
 
 const STATS_KEY = 'blinkbreak.stats.v1';
 const SETTINGS_KEY = 'blinkbreak.settings.v1';
@@ -66,6 +65,8 @@ export default function App() {
   const [activeReminder, setActiveReminder] = useState<{ kind: ReminderKind } | null>(null);
   const [tab, setTab] = useState<'today' | 'gallery' | 'settings'>('today');
   const [windowLabel, setWindowLabel] = useState('main');
+  const resolvedTheme = useResolvedTheme(settings.theme);
+  useApplyTheme(resolvedTheme, windowLabel !== 'reminder');
   const schedRef = useRef<SchedulerState>(createSchedulerState());
   const reminderVisibleRef = useRef(false);
   const presentingReminderRef = useRef(false);
@@ -114,6 +115,7 @@ export default function App() {
             presentation: presentationFor(reminder.kind),
             expiryAction: expiryActionFor(reminder.kind),
             reducedMotion: settings.reducedMotion,
+            theme: resolvedTheme,
           });
         } catch {
           reminderVisibleRef.current = false;
@@ -234,21 +236,33 @@ export default function App() {
 
   if (windowLabel === 'reminder') return <NativeReminder />;
 
+  const tabs = [
+    { id: 'today', label: 'Today' },
+    { id: 'gallery', label: 'Reminders' },
+    { id: 'settings', label: 'Settings' },
+  ] as const;
+
   return (
     <div className="bb-shell">
-      <header className="bb-hero">
-        <div style={{ fontSize: 48 }} aria-hidden>👁️</div>
-        <div>
+      <header className="bb-header">
+        <div className="bb-brand" data-kind="blink">
+          <span className="bb-brand-mark" aria-hidden="true"><EyeSymbol t={0} durationSec={10} still /></span>
           <h1>BlinkBreak</h1>
-          <p>Gentle cartoon nudges to blink, look away, sit well, and move. Always dismissible, never blocking.</p>
         </div>
+        <nav className="bb-segmented" aria-label="Sections">
+          {tabs.map(({ id, label }) => (
+            <button
+              key={id}
+              className={tab === id ? 'is-active' : ''}
+              aria-pressed={tab === id}
+              data-testid={`tab-${id}`}
+              onClick={() => setTab(id)}
+            >
+              {label}
+            </button>
+          ))}
+        </nav>
       </header>
-
-      <nav className="bb-tabs" aria-label="Sections">
-        <button className={`bb-btn ${tab === 'today' ? 'primary' : ''}`} data-testid="tab-today" onClick={() => setTab('today')}>Today</button>
-        <button className={`bb-btn ${tab === 'gallery' ? 'primary' : ''}`} data-testid="tab-gallery" onClick={() => setTab('gallery')}>Cartoon gallery</button>
-        <button className={`bb-btn ${tab === 'settings' ? 'primary' : ''}`} data-testid="tab-settings" onClick={() => setTab('settings')}>Settings</button>
-      </nav>
 
       {activeReminder && presentationFor(activeReminder.kind) === 'toast' && (
         <BlinkToast
@@ -269,7 +283,7 @@ export default function App() {
         />
       )}
 
-      <div className="bb-grid">
+      <main key={tab} className="bb-page">
         {tab === 'today' && (
           <Dashboard
             activeSec={stats.activeSec}
@@ -281,23 +295,15 @@ export default function App() {
             onResume={() => setSettings((s) => ({ ...s, pauseUntilMs: null }))}
           />
         )}
-        {tab === 'gallery' && (
-          <>
-            <div className="bb-card" data-testid="gallery-blink"><h2>Blink</h2><div className="bb-stage"><BlinkEye reducedMotion={settings.reducedMotion} /></div></div>
-            <div className="bb-card" data-testid="gallery-lookaway"><h2>Look away (20-20-20)</h2><div className="bb-stage"><LookAway reducedMotion={settings.reducedMotion} /></div></div>
-            <div className="bb-card" data-testid="gallery-posture"><h2>Posture reset</h2><div className="bb-stage"><PostureReset reducedMotion={settings.reducedMotion} /></div></div>
-            <div className="bb-card" data-testid="gallery-move"><h2>Move & stretch</h2><div className="bb-stage"><MoveStretch reducedMotion={settings.reducedMotion} /></div></div>
-          </>
-        )}
+        {tab === 'gallery' && <Gallery settings={settings} />}
         {tab === 'settings' && (
           <SettingsPanel settings={settings} onChange={setSettings} onReset={() => setSettings(cloneSettings(DEFAULT_SETTINGS))} />
         )}
-      </div>
+      </main>
 
-      <p className="bb-note" style={{ marginTop: 20 }}>
-        Health basis: 20-20-20 rule (AOA), frequent blinking + distance breaks (AAO), microbreaks + posture variety (OSHA).
-        This app encourages habits; it is not a medical device.
-      </p>
+      <footer className="bb-footer">
+        Based on the 20-20-20 rule and microbreak guidance. Encourages habits; not a medical device.
+      </footer>
     </div>
   );
 }
