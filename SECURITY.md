@@ -7,8 +7,11 @@ calls — but the codebase still touches the OS (tray, autostart, idle time,
 fullscreen detection), so reports are welcome.
 
 - **Do not open a public issue** for a suspected vulnerability.
-- Email **muhammedrinshidvpr@gmail.com** with a description and, if possible,
-  steps to reproduce.
+- Preferred: use GitHub's private
+  [**Report a vulnerability**](https://github.com/muhammedrinshidvpr-coder/blinkbreak/security/advisories/new)
+  form (Security tab). Only maintainers can see it.
+- Or email **muhammedrinshidvpr@gmail.com** with a description and, if
+  possible, steps to reproduce.
 - You can expect an acknowledgement within a few days and a fix or mitigation
   plan as soon as reasonably possible.
 
