@@ -1,8 +1,8 @@
 {
   "name": "blinkbreak",
-  "version": "0.1.0",
+  "version": "0.2.0",
   "private": true,
-  "description": "BlinkBreak — gentle cartoon health reminders for long laptop sessions (blink, look away, posture, move).",
+  "description": "BlinkBreak — calm reminders to blink, look away, sit tall, and move during long screen sessions.",
   "author": "muhammedrinshidvpr-coder",
   "license": "MIT",
   "repository": {

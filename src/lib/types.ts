@@ -27,12 +27,17 @@ export interface AppSettings {
   quietHours: { enabled: boolean; start: string; end: string };
   sound: { enabled: boolean; volume: number };
   reducedMotion: boolean;
+  /** Appearance: follow Windows, or force light/dark. */
+  theme: ThemeSetting;
   autostart: boolean;
   fullscreenDefer: boolean;
   pauseUntilMs: number | null;
 }
 
 export type ReminderAction = 'done' | 'skip' | 'snooze';
+
+export type ThemeSetting = 'system' | 'light' | 'dark';
+export type ResolvedTheme = 'light' | 'dark';
 
 /** Blink is a small top-center toast; everything else dims the screen. */
 export type ReminderPresentation = 'toast' | 'overlay';
@@ -74,27 +79,13 @@ export interface DayStats {
   snoozed: Partial<Record<ReminderKind, number>>;
 }
 
+/** Short, calm copy: a title and at most one quiet line. */
 export const REMINDER_META: Record<ReminderKind, { title: string; body: string }> = {
-  blink: {
-    title: 'Time to blink',
-    body: 'Relax your face. Blink slowly with the cartoon eye.',
-  },
-  lookaway: {
-    title: 'Look far away',
-    body: 'Look at something about 20 feet away for 20 seconds. (20-20-20 rule)',
-  },
-  posture: {
-    title: 'Posture reset',
-    body: 'Relax your shoulders. Support your back. Head balanced over your torso.',
-  },
-  move: {
-    title: 'Move & stretch',
-    body: 'Stand, roll your shoulders, shake out your hands, walk briefly.',
-  },
-  rest: {
-    title: 'Take a longer rest',
-    body: 'You have been at it a while. Step away for 10–15 minutes if you can.',
-  },
+  blink: { title: 'Blink slowly', body: 'Soft, full blinks' },
+  lookaway: { title: 'Look far away', body: '20 feet, 20 seconds' },
+  posture: { title: 'Sit tall', body: 'Shoulders down, back supported' },
+  move: { title: 'Stand and stretch', body: 'A short walk helps too' },
+  rest: { title: 'Step away', body: 'Rest your eyes and body' },
 };
 
 export const DEFAULT_SETTINGS: AppSettings = {
@@ -110,6 +101,7 @@ export const DEFAULT_SETTINGS: AppSettings = {
   quietHours: { enabled: false, start: '22:00', end: '08:00' },
   sound: { enabled: false, volume: 0.4 },
   reducedMotion: false,
+  theme: 'system',
   autostart: true,
   fullscreenDefer: true,
   pauseUntilMs: null,
@@ -152,5 +144,6 @@ export function sanitizeSettings(raw: unknown): AppSettings {
   if (problems.length > 0) return fallback;
   const merged = { ...fallback, ...(raw as Partial<AppSettings>) };
   merged.reminders = { ...fallback.reminders, ...((raw as AppSettings).reminders ?? {}) };
+  if (!['system', 'light', 'dark'].includes(merged.theme)) merged.theme = 'system';
   return merged;
 }

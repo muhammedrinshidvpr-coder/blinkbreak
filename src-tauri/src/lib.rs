@@ -46,9 +46,10 @@ struct ReminderSlot {
 
 /// Grace after the countdown before the native watchdog closes a reminder the webview failed to close.
 const WATCHDOG_GRACE_SECS: u64 = 3;
-/// Logical size and top margin of the blink toast.
-const TOAST_SIZE: (f64, f64) = (460.0, 170.0);
-const TOAST_TOP_MARGIN: f64 = 18.0;
+/// Logical size and top margin of the blink toast window. Kept tight around the pill:
+/// its transparent edges still catch clicks meant for the app underneath.
+const TOAST_SIZE: (f64, f64) = (300.0, 96.0);
+const TOAST_TOP_MARGIN: f64 = 6.0;
 
 #[allow(clippy::too_many_arguments)]
 #[tauri::command]
@@ -63,6 +64,7 @@ fn show_reminder(
     presentation: String,
     expiry_action: String,
     reduced_motion: bool,
+    theme: String,
 ) -> Result<(), String> {
     let Some(win) = app.get_webview_window("reminder") else {
         return Err("no reminder window".into());
@@ -108,6 +110,7 @@ fn show_reminder(
             "presentation": presentation,
             "expiryAction": expiry_action,
             "reducedMotion": reduced_motion,
+            "theme": theme,
         }),
     )
     .map_err(|e| e.to_string())?;

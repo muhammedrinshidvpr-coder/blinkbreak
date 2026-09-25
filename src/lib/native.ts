@@ -1,4 +1,4 @@
-import type { ReminderPresentation } from './types';
+import type { ReminderPresentation, ResolvedTheme } from './types';
 
 export interface ReminderPayload {
   kind: string;
@@ -11,6 +11,7 @@ export interface ReminderPayload {
   expiryAction: 'done' | 'skip';
   /** Sent with each reminder: the reminder window's own settings copy is only read at startup. */
   reducedMotion: boolean;
+  theme: ResolvedTheme;
 }
 
 type TauriWindow = Window & { __TAURI_INTERNALS__?: unknown };

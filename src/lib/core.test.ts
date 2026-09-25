@@ -67,3 +67,22 @@ describe('reminder presentation + timing rules', () => {
     expect(formatShortDuration(90 * 60)).toBe('1h 30m');
   });
 });
+
+describe('appearance setting', () => {
+  it('defaults to system and repairs invalid saved values', async () => {
+    const { sanitizeSettings, DEFAULT_SETTINGS } = await import('./types');
+    expect(DEFAULT_SETTINGS.theme).toBe('system');
+    const saved = JSON.parse(JSON.stringify(DEFAULT_SETTINGS));
+    delete saved.theme; // settings saved by v0.1.0
+    expect(sanitizeSettings(saved).theme).toBe('system');
+    expect(sanitizeSettings({ ...saved, theme: 'neon' }).theme).toBe('system');
+    expect(sanitizeSettings({ ...saved, theme: 'dark' }).theme).toBe('dark');
+  });
+
+  it('resolves System from the Windows preference', async () => {
+    const { resolveTheme } = await import('./theme');
+    expect(resolveTheme('system', true)).toBe('dark');
+    expect(resolveTheme('system', false)).toBe('light');
+    expect(resolveTheme('light', true)).toBe('light');
+  });
+});

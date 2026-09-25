@@ -4,6 +4,7 @@ import { emitReminderAction, hideNativeReminder, listen, type ReminderPayload } 
 import type { CardAction } from './ReminderCard';
 import { OverlayReminder } from './OverlayReminder';
 import { BlinkToast } from './BlinkToast';
+import { useApplyTheme } from '../lib/theme';
 
 export function NativeReminder() {
   const [reminder, setReminder] = useState<{ payload: ReminderPayload; sequence: number } | null>(null);
@@ -26,6 +27,8 @@ export function NativeReminder() {
       document.body.classList.remove('bb-overlay-body');
     };
   }, []);
+
+  useApplyTheme(reminder?.payload.theme ?? 'light');
 
   const action = (next: CardAction) => {
     if (!reminder) return;

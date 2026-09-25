@@ -33,18 +33,14 @@ export function OverlayReminder({
 
   return (
     <div
-      className={`bb-overlay bb-overlay-${kind} ${leaving ? 'is-leaving' : ''} ${reducedMotion ? 'reduced-motion' : ''}`}
+      className={`bb-overlay ${leaving ? 'is-leaving' : ''} ${reducedMotion ? 'reduced-motion' : ''}`}
+      data-kind={kind}
       data-testid="reminder-overlay"
       onClick={(event) => {
         if (event.target === event.currentTarget) settle('skip');
       }}
     >
-      <div className="bb-overlay-glow" aria-hidden="true" />
-      <div className={`bb-overlay-card bb-enter-${kind}`}>
-        <div className="bb-overlay-kicker">
-          <span><i aria-hidden="true" /> Gentle pause</span>
-          <span>Click outside to skip</span>
-        </div>
+      <div className="bb-overlay-card">
         <ReminderCard
           kind={kind}
           title={title}
