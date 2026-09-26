@@ -109,15 +109,24 @@ export function applyAction(
   }
 }
 
-/** Seconds until next due reminder (for tray tooltip / dashboard). Null when paused/all disabled. */
-export function nextDueInSec(state: SchedulerState, settings: AppSettings, nowMs: number): number | null {
+/** The soonest reminder and its active-use seconds away. Null when paused/all disabled. */
+export function nextDue(
+  state: SchedulerState,
+  settings: AppSettings,
+  nowMs: number,
+): { kind: ReminderKind; inSec: number } | null {
   if (isPaused(settings, nowMs)) return null;
-  let best: number | null = null;
+  let best: { kind: ReminderKind; inSec: number } | null = null;
   for (const kind of KINDS) {
     const def = settings.reminders[kind];
     if (!def.enabled) continue;
     const remain = def.intervalSec - state.accruedSec[kind];
-    if (best === null || remain < best) best = remain;
+    if (best === null || remain < best.inSec) best = { kind, inSec: remain };
   }
-  return best === null ? null : Math.max(0, Math.round(best));
+  return best && { kind: best.kind, inSec: Math.max(0, Math.round(best.inSec)) };
+}
+
+/** Seconds until next due reminder (for tray tooltip / dashboard). Null when paused/all disabled. */
+export function nextDueInSec(state: SchedulerState, settings: AppSettings, nowMs: number): number | null {
+  return nextDue(state, settings, nowMs)?.inSec ?? null;
 }

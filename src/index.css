@@ -5,8 +5,9 @@
   --bb-surface-solid: #ffffff;
   --bb-material: rgba(255, 255, 255, .8);
   --bb-ink: #1d1d1f;
-  --bb-secondary: #6e6e73;
-  --bb-tertiary: #a1a1a6;
+  /* Text tokens meet 4.5:1 on world, surface and fill. */
+  --bb-secondary: #5f5f64;
+  --bb-tertiary: #6b6b70;
   --bb-hair: rgba(0, 0, 0, .07);
   --bb-hair-strong: rgba(0, 0, 0, .09);
   --bb-fill: rgba(0, 0, 0, .045);
@@ -14,10 +15,14 @@
   --bb-veil: rgba(245, 244, 241, .5);
   --bb-shadow-sm: 0 1px 2px rgba(0, 0, 0, .04);
   --bb-shadow-lg: 0 1px 1px rgba(0, 0, 0, .04), 0 12px 36px rgba(0, 0, 0, .1);
+  --bb-danger: #b3261e;
   --bb-accent: #7f9f8f;
 
+  /* Motion: fast feedback, calm entrances, quicker exits. */
   --bb-ease: cubic-bezier(.2, .8, .2, 1);
   --bb-ease-in: cubic-bezier(.4, 0, 1, 1);
+  --bb-fast: .14s;
+  --bb-medium: .22s;
 
   font-family: "Segoe UI Variable Text", "Segoe UI", -apple-system, system-ui, sans-serif;
   color: var(--bb-ink);
@@ -31,8 +36,8 @@
   --bb-surface-solid: #2a2927;
   --bb-material: rgba(46, 45, 43, .8);
   --bb-ink: #f5f5f7;
-  --bb-secondary: #a1a1a6;
-  --bb-tertiary: #6e6e73;
+  --bb-secondary: #a8a8ad;
+  --bb-tertiary: #9a9a9f;
   --bb-hair: rgba(255, 255, 255, .08);
   --bb-hair-strong: rgba(255, 255, 255, .12);
   --bb-fill: rgba(255, 255, 255, .07);
@@ -40,6 +45,7 @@
   --bb-veil: rgba(20, 19, 18, .45);
   --bb-shadow-sm: 0 1px 2px rgba(0, 0, 0, .3);
   --bb-shadow-lg: 0 1px 1px rgba(0, 0, 0, .3), 0 14px 40px rgba(0, 0, 0, .45);
+  --bb-danger: #f2b8b5;
   --bb-accent: #9dbcad;
   color-scheme: dark;
 }
@@ -80,27 +86,36 @@ button { font: inherit; color: inherit; }
 .bb-brand-mark .bb-symbol { width: 26px; height: 26px; }
 .bb-brand h1 { font-size: 17px; font-weight: 600; letter-spacing: -.015em; }
 
-.bb-page { animation: bb-rise .45s var(--bb-ease) both; }
+.bb-page { animation: bb-rise var(--bb-medium) var(--bb-ease) both; }
 
 .bb-footer { margin-top: 36px; text-align: center; color: var(--bb-tertiary); font-size: 12px; }
 
 /* ---------- Controls ---------- */
 
+/* Equal-width segments with one indicator that slides between them. */
 .bb-segmented {
-  display: inline-flex; gap: 2px; padding: 2px; border-radius: 10px;
+  --gap: 2px;
+  position: relative; isolation: isolate;
+  display: inline-grid; grid-auto-flow: column; grid-auto-columns: 1fr; gap: var(--gap);
+  padding: 2px; border-radius: 10px;
   background: var(--bb-fill);
+}
+.bb-segment-indicator {
+  position: absolute; z-index: -1; top: 2px; bottom: 2px; left: 2px;
+  width: calc((100% - 4px - (var(--segments) - 1) * var(--gap)) / var(--segments));
+  border-radius: 8px;
+  background: var(--bb-surface-solid);
+  box-shadow: 0 1px 2px rgba(0, 0, 0, .08), 0 0 0 .5px var(--bb-hair);
+  transform: translateX(calc(var(--selected) * (100% + var(--gap))));
+  transition: transform var(--bb-medium) var(--bb-ease);
 }
 .bb-segmented button {
   border: 0; background: transparent; cursor: pointer;
   padding: 6px 14px; border-radius: 8px;
   font-size: 13px; font-weight: 500; color: var(--bb-secondary);
-  transition: background .2s var(--bb-ease), color .2s var(--bb-ease), box-shadow .2s var(--bb-ease);
+  transition: color var(--bb-fast) var(--bb-ease);
 }
-.bb-segmented button:hover { color: var(--bb-ink); }
-.bb-segmented button.is-active {
-  background: var(--bb-surface-solid); color: var(--bb-ink);
-  box-shadow: 0 1px 2px rgba(0, 0, 0, .08), 0 0 0 .5px var(--bb-hair);
-}
+.bb-segmented button:hover, .bb-segmented button.is-active { color: var(--bb-ink); }
 .bb-segmented.small button { padding: 4px 11px; font-size: 12.5px; }
 
 .bb-btn {
@@ -108,17 +123,20 @@ button { font: inherit; color: inherit; }
   padding: 8px 16px; border-radius: 999px;
   font-size: 13.5px; font-weight: 500; letter-spacing: -.005em;
   background: var(--bb-fill); color: var(--bb-ink);
-  transition: background .18s var(--bb-ease), transform .18s var(--bb-ease), opacity .18s;
+  transition: background var(--bb-fast) var(--bb-ease), transform var(--bb-fast) var(--bb-ease), opacity var(--bb-fast);
 }
 .bb-btn:hover { background: var(--bb-fill-hover); }
 .bb-btn:active { transform: scale(.97); }
-.bb-btn:focus-visible, .bb-segmented button:focus-visible, .bb-switch:focus-visible, .bb-toast-close:focus-visible {
+.bb-btn:focus-visible, .bb-segmented button:focus-visible, .bb-switch:focus-visible,
+.bb-toast-close:focus-visible, .bb-toast-complete:focus-visible, .bb-overlay-card:focus-visible {
   outline: 2px solid var(--bb-accent); outline-offset: 2px;
 }
+.bb-overlay-card:focus { outline: none; }
 .bb-btn.primary { background: var(--bb-ink); color: var(--bb-world); }
 .bb-btn.primary:hover { opacity: .88; }
 .bb-btn.quiet { background: transparent; color: var(--bb-secondary); }
 .bb-btn.quiet:hover { background: var(--bb-fill); color: var(--bb-ink); }
+.bb-btn.small { padding: 5px 12px; font-size: 12.5px; }
 .bb-btn-meta { margin-left: 4px; color: var(--bb-tertiary); font-variant-numeric: tabular-nums; }
 
 .bb-actions { display: flex; gap: 8px; flex-wrap: wrap; align-items: center; }
@@ -127,24 +145,26 @@ button { font: inherit; color: inherit; }
   appearance: none; -webkit-appearance: none; margin: 0; flex: none; cursor: pointer;
   position: relative; width: 38px; height: 23px; border-radius: 999px;
   background: var(--bb-fill-hover);
-  transition: background .25s var(--bb-ease);
+  transition: background var(--bb-medium) var(--bb-ease);
 }
 .bb-switch::after {
   content: ""; position: absolute; top: 2px; left: 2px; width: 19px; height: 19px; border-radius: 50%;
   background: #fff; box-shadow: 0 1px 3px rgba(0, 0, 0, .18);
-  transition: transform .3s var(--bb-ease);
+  transition: transform var(--bb-medium) var(--bb-ease);
 }
 .bb-switch:checked { background: #7f9f8f; }
 :root[data-theme="dark"] .bb-switch:checked { background: #86a797; }
 .bb-switch:checked::after { transform: translateX(15px); }
+.bb-switch:disabled { cursor: default; opacity: .5; }
 
 .bb-input {
   border: 0; border-radius: 7px; padding: 4px 8px;
   background: var(--bb-fill); color: var(--bb-ink);
   font: inherit; font-size: 13px; font-variant-numeric: tabular-nums;
 }
-.bb-input[type="number"] { width: 52px; text-align: right; }
+.bb-input[type="number"] { width: 56px; text-align: right; }
 .bb-input:focus { outline: 2px solid var(--bb-accent); outline-offset: 0; }
+.bb-input:disabled { color: var(--bb-secondary); }
 
 /* ---------- Today ---------- */
 
@@ -152,26 +172,49 @@ button { font: inherit; color: inherit; }
   padding: 28px; border-radius: 20px;
   background: var(--bb-surface-solid); box-shadow: var(--bb-shadow-sm), 0 0 0 .5px var(--bb-hair);
 }
-.bb-stats { display: grid; grid-template-columns: repeat(3, 1fr); gap: 16px; margin: 0 0 28px; }
+.bb-today { display: grid; gap: 12px; }
+
+.bb-hero {
+  display: grid; grid-template-columns: auto 1fr; align-items: center; column-gap: 20px; row-gap: 24px;
+}
+.bb-hero-symbol {
+  width: 64px; height: 64px; padding: 8px; border-radius: 18px;
+  background: var(--bb-fill);
+}
+.bb-hero-symbol .bb-symbol { --bb-stroke: 1.8px; }
+.bb-hero.is-paused .bb-hero-symbol, .bb-hero.is-quiet .bb-hero-symbol, .bb-hero.is-off .bb-hero-symbol { opacity: .45; }
+.bb-eyebrow { font-size: 12.5px; font-weight: 500; color: var(--bb-secondary); }
+.bb-hero h2 {
+  margin: 2px 0 3px;
+  font-family: "Segoe UI Variable Display", "Segoe UI", system-ui, sans-serif;
+  font-size: 24px; font-weight: 600; letter-spacing: -.02em;
+}
+.bb-hero-actions { grid-column: 1 / -1; }
+
+.bb-stats { display: grid; grid-template-columns: repeat(2, 1fr); gap: 16px; margin: 0; padding: 20px 28px; }
 .bb-stats div { min-width: 0; }
 .bb-stats dt { font-size: 12.5px; color: var(--bb-secondary); }
 .bb-stats dd {
   margin: 4px 0 0; font-family: "Segoe UI Variable Display", "Segoe UI", system-ui, sans-serif;
-  font-size: 34px; font-weight: 600; letter-spacing: -.025em; font-variant-numeric: tabular-nums;
+  font-size: 30px; font-weight: 600; letter-spacing: -.025em; font-variant-numeric: tabular-nums;
 }
-.bb-stats dd span { color: var(--bb-tertiary); font-weight: 500; }
-.bb-panel .bb-quiet { margin-top: 14px; }
+.bb-stats dd span { color: var(--bb-tertiary); font-size: 15px; font-weight: 500; letter-spacing: 0; }
 
 /* ---------- Reminders gallery ---------- */
 
-.bb-gallery { display: grid; grid-template-columns: repeat(auto-fill, minmax(132px, 1fr)); gap: 12px; }
+.bb-gallery { display: grid; grid-template-columns: repeat(auto-fill, minmax(124px, 1fr)); gap: 12px; }
 .bb-tile {
+  display: grid; justify-items: center;
   padding: 22px 14px 16px; border-radius: 18px; text-align: center;
   background: var(--bb-surface-solid); box-shadow: var(--bb-shadow-sm), 0 0 0 .5px var(--bb-hair);
+  transition: box-shadow var(--bb-medium) var(--bb-ease), transform var(--bb-medium) var(--bb-ease);
 }
-.bb-tile-symbol { width: 64px; height: 64px; margin: 0 auto 14px; }
-.bb-tile h3 { font-size: 13.5px; font-weight: 600; letter-spacing: -.01em; }
+.bb-tile:hover, .bb-tile:focus-within { box-shadow: var(--bb-shadow-lg), 0 0 0 .5px var(--bb-hair); transform: translateY(-1px); }
+.bb-tile.is-off .bb-tile-symbol { opacity: .45; }
+.bb-tile-symbol { width: 64px; height: 64px; margin: 0 auto 14px; transition: opacity var(--bb-medium); }
+.bb-tile h2 { font-size: 13.5px; font-weight: 600; letter-spacing: -.01em; }
 .bb-tile p { margin-top: 3px; font-size: 12px; color: var(--bb-secondary); font-variant-numeric: tabular-nums; }
+.bb-tile .bb-btn { margin-top: 12px; }
 
 /* ---------- Settings ---------- */
 
@@ -186,8 +229,11 @@ button { font: inherit; color: inherit; }
   min-height: 46px; padding: 8px 14px; font-size: 14px;
 }
 .bb-item + .bb-item { box-shadow: inset 0 .5px 0 var(--bb-hair-strong); }
+.bb-item.is-disabled > span:first-child, .bb-item.is-off > span:first-child { color: var(--bb-secondary); }
 .bb-item-controls { display: flex; align-items: center; gap: 14px; }
 .bb-inline-field { display: flex; align-items: center; gap: 6px; color: var(--bb-secondary); font-size: 13px; }
+.bb-note { margin: 8px 14px 0; font-size: 12.5px; color: var(--bb-secondary); }
+.bb-note.is-error { color: var(--bb-danger); }
 .bb-settings-footer { display: grid; justify-items: center; gap: 8px; text-align: center; }
 
 /* ---------- Symbols & progress ring ---------- */
@@ -206,6 +252,7 @@ button { font: inherit; color: inherit; }
 .bb-ring-progress {
   fill: none; stroke: var(--bb-accent); stroke-width: 1.6; stroke-linecap: round;
   stroke-dasharray: 100; stroke-dashoffset: 0;
+  transition: stroke-dashoffset .1s linear;
   animation: bb-drain var(--bb-duration, 10s) linear forwards;
 }
 .bb-ring-inner { position: absolute; inset: 10%; }
@@ -220,86 +267,109 @@ button { font: inherit; color: inherit; }
   pointer-events: none;
 }
 .bb-toast {
-  display: flex; align-items: center; gap: 10px; width: max-content; white-space: nowrap;
-  padding: 6px 10px 6px 6px; border-radius: 999px;
+  display: flex; align-items: center; gap: 6px; width: max-content; white-space: nowrap;
+  padding: 6px 8px 6px 6px; border-radius: 999px;
   background: var(--bb-material); backdrop-filter: blur(30px) saturate(1.8);
   box-shadow: var(--bb-shadow-lg), 0 0 0 .5px var(--bb-hair);
-  cursor: pointer; pointer-events: auto; user-select: none;
-  animation: bb-toast-in .6s var(--bb-ease) both;
+  pointer-events: auto; user-select: none;
+  animation: bb-toast-in .34s var(--bb-ease) both;
 }
-.bb-toast.is-leaving { animation: bb-toast-out .32s var(--bb-ease-in) forwards; }
+.bb-toast.is-leaving { animation: bb-toast-out .2s var(--bb-ease-in) forwards; }
+.bb-toast-complete {
+  display: flex; align-items: center; gap: 10px; padding: 0 6px 0 0;
+  border: 0; border-radius: 999px; background: transparent; cursor: pointer;
+}
 .bb-toast-title { font-size: 14.5px; font-weight: 600; letter-spacing: -.015em; }
+/* Always visible so it can be found without hovering; 28px target around a small glyph. */
 .bb-toast-close {
-  display: grid; place-items: center; width: 20px; height: 20px; padding: 0; margin-left: 2px;
+  display: grid; place-items: center; width: 28px; height: 28px; padding: 0;
   border: 0; border-radius: 50%; cursor: pointer;
-  background: var(--bb-fill); color: var(--bb-secondary);
-  opacity: 0; transform: scale(.8);
-  transition: opacity .2s var(--bb-ease), transform .2s var(--bb-ease), background .2s;
+  background: transparent; color: var(--bb-secondary);
+  opacity: .7;
+  transition: opacity var(--bb-fast) var(--bb-ease), background var(--bb-fast);
 }
 .bb-toast-close svg { width: 8px; height: 8px; stroke: currentColor; stroke-width: 1.6; stroke-linecap: round; }
-.bb-toast:hover .bb-toast-close, .bb-toast-close:focus-visible { opacity: 1; transform: none; }
+.bb-toast:hover .bb-toast-close, .bb-toast-close:focus-visible { opacity: 1; }
 .bb-toast-close:hover { background: var(--bb-fill-hover); color: var(--bb-ink); }
 
 /* Spring-like entrance: drops in, overshoots a hair, settles. */
 @keyframes bb-toast-in {
-  0% { opacity: 0; transform: translateY(-14px) scale(.94); }
-  55% { opacity: 1; transform: translateY(1.5px) scale(1.006); }
+  0% { opacity: 0; transform: translateY(-12px) scale(.95); }
+  60% { opacity: 1; transform: translateY(1px) scale(1.004); }
   100% { opacity: 1; transform: none; }
 }
 @keyframes bb-toast-out { to { opacity: 0; transform: translateY(-6px) scale(.96); } }
 
 /* ---------- Overlay reminders ---------- */
 
-body.bb-overlay-body, body.bb-overlay-body #root, .native-reminder-shell { min-height: 100vh; background: transparent; }
+html.bb-overlay-document, body.bb-overlay-body, body.bb-overlay-body #root, .native-reminder-shell { min-height: 100vh; background: transparent; }
 body.bb-overlay-body { overflow: hidden; }
+/* A transparent native window has nothing behind it for CSS to blur, so use a crisp solid surface there. */
+html.bb-overlay-document .bb-toast, html.bb-overlay-document .bb-overlay-card {
+  background: var(--bb-surface-solid); backdrop-filter: none;
+}
 
 .bb-overlay {
   position: fixed; inset: 0; z-index: 1000;
   display: grid; place-items: center; padding: 24px;
   background: var(--bb-veil); backdrop-filter: blur(16px) saturate(1.1);
-  animation: bb-fade-in .45s var(--bb-ease) both;
+  animation: bb-fade-in .28s var(--bb-ease) both;
 }
-.bb-overlay.is-leaving { animation: bb-fade-out .32s var(--bb-ease-in) forwards; }
+.bb-overlay.is-leaving { animation: bb-fade-out .2s var(--bb-ease-in) forwards; }
 .bb-overlay-card {
   width: min(320px, 100%); padding: 30px 24px 22px; border-radius: 24px;
   background: var(--bb-material); backdrop-filter: blur(30px) saturate(1.8);
   box-shadow: var(--bb-shadow-lg), 0 0 0 .5px var(--bb-hair);
-  animation: bb-card-in .6s var(--bb-ease) both;
+  animation: bb-card-in .32s var(--bb-ease) both;
 }
-.bb-overlay.is-leaving .bb-overlay-card { animation: bb-card-out .32s var(--bb-ease-in) forwards; }
+.bb-overlay.is-leaving .bb-overlay-card { animation: bb-card-out .2s var(--bb-ease-in) forwards; }
 
 .bb-reminder { display: grid; justify-items: center; text-align: center; }
 .bb-reminder .bb-ring { margin-bottom: 18px; }
 .bb-reminder h2 { font-size: 19px; font-weight: 600; letter-spacing: -.02em; }
-.bb-reminder-line { margin-top: 5px; font-size: 13.5px; color: var(--bb-secondary); animation: bb-fade-in .6s var(--bb-ease) both; }
+.bb-reminder-line { margin-top: 5px; font-size: 13.5px; color: var(--bb-secondary); animation: bb-fade-in .4s var(--bb-ease) both; }
+.bb-duration { margin-top: 10px; font-size: 12px; color: var(--bb-secondary); font-variant-numeric: tabular-nums; }
 .bb-reminder .bb-actions { justify-content: center; margin-top: 22px; }
 
 @keyframes bb-fade-in { from { opacity: 0; } to { opacity: 1; } }
 @keyframes bb-fade-out { to { opacity: 0; } }
-@keyframes bb-rise { from { opacity: 0; transform: translateY(6px); } to { opacity: 1; transform: none; } }
+@keyframes bb-rise { from { opacity: 0; transform: translateY(4px); } to { opacity: 1; transform: none; } }
+/* Transform + opacity only: animating blur on top of backdrop filters is costly in WebView2. */
 @keyframes bb-card-in {
-  from { opacity: 0; transform: translateY(10px) scale(.97); filter: blur(6px); }
-  to { opacity: 1; transform: none; filter: none; }
+  from { opacity: 0; transform: translateY(8px) scale(.97); }
+  to { opacity: 1; transform: none; }
 }
-@keyframes bb-card-out { to { opacity: 0; transform: scale(.97); filter: blur(4px); } }
+@keyframes bb-card-out { to { opacity: 0; transform: scale(.97); } }
 
-/* ---------- Reduced motion: fades only; the ring keeps draining ---------- */
+/* ---------- Reduced motion: short fades only; the ring keeps draining ----------
+   `.reduced-motion` comes from a reminder's props; `html.bb-reduce-motion` from the app
+   setting; the media query from Windows. Components also check the OS setting in JS. */
 
 .reduced-motion.bb-toast, .reduced-motion.bb-overlay, .reduced-motion .bb-overlay-card, .reduced-motion .bb-reminder-line {
-  animation: bb-fade-in .15s linear both;
+  animation: bb-fade-in .12s linear both;
 }
-.reduced-motion.bb-toast.is-leaving, .reduced-motion.bb-overlay.is-leaving { animation: bb-fade-out .15s linear forwards; }
+.reduced-motion.bb-toast.is-leaving, .reduced-motion.bb-overlay.is-leaving,
+.reduced-motion.bb-overlay.is-leaving .bb-overlay-card { animation: bb-fade-out .12s linear forwards; }
+html.bb-reduce-motion .bb-page { animation: bb-fade-in .12s linear both; }
+html.bb-reduce-motion .bb-segment-indicator, html.bb-reduce-motion .bb-switch, html.bb-reduce-motion .bb-switch::after,
+html.bb-reduce-motion .bb-btn, html.bb-reduce-motion .bb-tile { transition: none; }
+html.bb-reduce-motion .bb-tile:hover, html.bb-reduce-motion .bb-tile:focus-within, html.bb-reduce-motion .bb-btn:active { transform: none; }
 @media (prefers-reduced-motion: reduce) {
-  .bb-toast, .bb-overlay, .bb-overlay-card, .bb-page, .bb-reminder-line { animation: bb-fade-in .15s linear both; }
-  .bb-toast.is-leaving, .bb-overlay.is-leaving, .bb-overlay.is-leaving .bb-overlay-card { animation: bb-fade-out .15s linear forwards; }
-  .bb-switch, .bb-switch::after, .bb-btn, .bb-segmented button { transition: none; }
+  .bb-toast, .bb-overlay, .bb-overlay-card, .bb-page, .bb-reminder-line { animation: bb-fade-in .12s linear both; }
+  .bb-toast.is-leaving, .bb-overlay.is-leaving, .bb-overlay.is-leaving .bb-overlay-card { animation: bb-fade-out .12s linear forwards; }
+  .bb-segment-indicator, .bb-switch, .bb-switch::after, .bb-btn, .bb-tile, .bb-segmented button { transition: none; }
+  .bb-tile:hover, .bb-tile:focus-within, .bb-btn:active { transform: none; }
 }
 
 /* ---------- Small windows ---------- */
 
 @media (max-width: 560px) {
   .bb-shell { padding: 20px 16px 32px; }
-  .bb-stats { grid-template-columns: 1fr 1fr; }
-  .bb-stats dd { font-size: 28px; }
+  .bb-panel { padding: 22px; }
+  .bb-hero { column-gap: 16px; }
+  .bb-hero-symbol { width: 52px; height: 52px; }
+  .bb-hero h2 { font-size: 21px; }
+  .bb-stats { padding: 18px 22px; }
+  .bb-stats dd { font-size: 26px; }
   .bb-item-controls .bb-inline-field { font-size: 12px; }
 }

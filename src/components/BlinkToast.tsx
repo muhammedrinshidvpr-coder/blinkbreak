@@ -1,9 +1,11 @@
-import { useEffect, useState } from 'react';
+import { useEffect } from 'react';
 import { expiryActionFor, REMINDER_META } from '../lib/types';
 import type { CardAction } from './ReminderCard';
 import { EyeSymbol, ProgressRing } from './symbols';
 import { useElapsed } from './useElapsed';
 import { useSettleOnce } from './useSettleOnce';
+import { useReducedMotion } from '../lib/motion';
+import { useCountdown } from './useCountdown';
 
 /**
  * Small top-center blink nudge: an eye that blinks slowly inside a draining ring,
@@ -18,18 +20,11 @@ export function BlinkToast({
   reducedMotion?: boolean;
   onAction: (action: CardAction) => void;
 }) {
+  reducedMotion = useReducedMotion(reducedMotion);
   const { leaving, settle } = useSettleOnce(onAction, reducedMotion);
   const total = Math.max(1, Math.ceil(durationSec));
-  const [left, setLeft] = useState(total);
+  const { left, progress } = useCountdown(total);
   const t = useElapsed(!reducedMotion);
-
-  useEffect(() => {
-    const deadline = Date.now() + total * 1000;
-    const id = window.setInterval(() => {
-      setLeft(Math.max(0, Math.ceil((deadline - Date.now()) / 1000)));
-    }, 250);
-    return () => window.clearInterval(id);
-  }, [total]);
 
   useEffect(() => {
     if (left === 0) settle(expiryActionFor('blink'));
@@ -42,14 +37,16 @@ export function BlinkToast({
         className={`bb-toast ${leaving ? 'is-leaving' : ''} ${reducedMotion ? 'reduced-motion' : ''}`}
         data-kind="blink"
         data-testid="blink-toast"
-        role="status"
+        role="group"
         aria-label={`${REMINDER_META.blink.title}, ${left} seconds left`}
-        onClick={() => settle('done')}
       >
-        <ProgressRing durationSec={total} size={40}>
+        <span className="bb-sr-only" role="status">{REMINDER_META.blink.title}</span>
+        <button className="bb-toast-complete" aria-label="Complete blink reminder" onClick={() => settle('done')}>
+        <ProgressRing durationSec={total} size={40} progress={progress}>
           <EyeSymbol t={t} durationSec={total} still={reducedMotion} />
         </ProgressRing>
         <span className="bb-toast-title">{REMINDER_META.blink.title}</span>
+        </button>
         <button
           className="bb-toast-close"
           data-testid="blink-toast-skip"

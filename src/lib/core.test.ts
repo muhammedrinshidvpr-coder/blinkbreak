@@ -1,6 +1,6 @@
 import { describe, it, expect } from 'vitest';
 import { classifyActivity } from './activity';
-import { sanitizeSettings, validateSettings, DEFAULT_SETTINGS } from './types';
+import { chimeFor, sanitizeSettings, validateSettings, DEFAULT_SETTINGS } from './types';
 
 describe('activity', () => {
   it('first sample counts nothing', () => {
@@ -84,5 +84,16 @@ describe('appearance setting', () => {
     expect(resolveTheme('system', true)).toBe('dark');
     expect(resolveTheme('system', false)).toBe('light');
     expect(resolveTheme('light', true)).toBe('light');
+  });
+});
+
+describe('chime policy', () => {
+  it('chimes only for big breaks, and only when switched on', () => {
+    const off = { sound: { enabled: false, volume: 0.4 } };
+    const on = { sound: { enabled: true, volume: 0.4 } };
+    expect(chimeFor('lookaway', off)).toBe(false);
+    expect(chimeFor('rest', on)).toBe(true);
+    expect(chimeFor('posture', on)).toBe(true);
+    expect(chimeFor('blink', on)).toBe(false);
   });
 });
