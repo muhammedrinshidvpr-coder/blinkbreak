@@ -6,6 +6,30 @@ All notable changes to BlinkBreak are listed here. The format follows
 
 ## [Unreleased]
 
+## [0.3.0] - 2026-09-26
+
+A polish release: easier to read, easier to use with a keyboard, and calmer motion.
+
+### Added
+- **Soft chime** for big breaks (off by default). Settings → Reminders.
+- The dashboard leads with your next reminder and says clearly when reminders are paused,
+  in quiet hours, or all turned off.
+- **Preview** plays the real reminder without counting toward your stats or moving the schedule.
+
+### Changed
+- Easier-to-read text: secondary text now meets 4.5:1 contrast in light and dark.
+- Choice controls slide to your pick, and the theme picker works with the arrow keys.
+- One motion setting: BlinkBreak calms its motion when either its own setting or Windows
+  "reduce animations" is on. Reminders fade out instead of vanishing.
+- Gallery symbols stay still until you hover them.
+- The interval box lets you finish typing, then keeps the value between 1 and 480 minutes.
+- "Start with Windows" waits for Windows to confirm and tells you if it fails. Reset keeps it.
+
+### Fixed
+- The blink reminder no longer shows a dark rectangle around the pill.
+- The countdown ring and the reminder's closing time now always match.
+- Reminder buttons work with the keyboard, and focus returns where it was afterward.
+
 ## [0.2.0] - 2026-09-25
 
 A new calm design: light, warm, minimal, with a dark mode.
@@ -50,6 +74,7 @@ First public release.
   start with Windows (minimized to tray).
 - Local-only daily stats. No network, accounts, or telemetry.
 
-[Unreleased]: https://github.com/muhammedrinshidvpr-coder/blinkbreak/compare/v0.2.0...HEAD
+[Unreleased]: https://github.com/muhammedrinshidvpr-coder/blinkbreak/compare/v0.3.0...HEAD
+[0.3.0]: https://github.com/muhammedrinshidvpr-coder/blinkbreak/compare/v0.2.0...v0.3.0
 [0.2.0]: https://github.com/muhammedrinshidvpr-coder/blinkbreak/compare/v0.1.0...v0.2.0
 [0.1.0]: https://github.com/muhammedrinshidvpr-coder/blinkbreak/releases/tag/v0.1.0
