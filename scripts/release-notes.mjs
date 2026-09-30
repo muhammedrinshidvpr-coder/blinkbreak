@@ -56,18 +56,19 @@ const deb = byExt('.deb');
 const appimage = byExt('.AppImage');
 const lines = [];
 if (win.length > 0) {
-  lines.push(`### Windows\n\n1. Download **\`${win[0]}\`** below and run it. No admin rights needed.`);
-  lines.push(`2. If Windows says **"Windows protected your PC"**, click **More info → Run anyway**`);
+  lines.push(`### Windows\n\n${win.map((name) => `- **\`${name}\`**`).join('\n')}`);
+  lines.push(`Run the installer. No admin rights needed. If Windows says **"Windows protected your PC"**, click **More info → Run anyway**`);
   lines.push(`   (the installer isn't paid-code-signed yet).`);
 }
 if (mac.length > 0) {
-  lines.push(`### macOS\n\n1. Download **\`${mac[0]}\`** below, open it, and drag BlinkBreak to Applications.`);
-  lines.push(`2. These builds are not Apple-notarized yet; if macOS blocks the app, right-click it and choose Open.`);
+  lines.push(`### macOS\n\n${mac.map((name) => `- **\`${name}\`**`).join('\n')}`);
+  lines.push(`These DMGs are signed and notarized by Apple. Open the disk image and drag BlinkBreak to Applications.`);
 }
 if (deb.length > 0 || appimage.length > 0) {
-  const linuxFile = deb[0] ?? appimage[0];
-  lines.push(`### Linux\n\n1. Download **\`${linuxFile}\`** below (${deb.length > 0 ? 'Debian/Ubuntu installer' : 'portable AppImage'}).`);
-  lines.push(`2. Idle and fullscreen detection are limited on Wayland; timers keep running and the app says so in Settings.`);
+  lines.push(`### Linux\n\n${[...deb, ...appimage].map((name) => `- **\`${name}\`**`).join('\n')}`);
+  if (deb.length > 0) lines.push(`Install the Debian package with your package manager.`);
+  if (appimage.length > 0) lines.push(`For AppImage, make it executable before launching (FUSE support may be required by your distribution).`);
+  lines.push(`System-wide idle and fullscreen detection are not implemented on Linux yet; timers count while BlinkBreak is open and Settings explains this limitation.`);
 }
 
 console.log(`${section}
@@ -80,9 +81,12 @@ BlinkBreak lives in your system tray / menu bar. Right-click the icon for option
 
 ## Verify the download (optional)
 
-\`\`\`
+The SHA-256 value for every installer is listed below. Compute the hash of the downloaded file
+and compare it to the matching filename:
+
+\`\`\`text
 ${sums.join('\n')}
 \`\`\`
 
-Windows PowerShell: \`Get-FileHash .\\${basename(installerPaths[0])}\`
-macOS/Linux: \`shasum -a 256 ${basename(installerPaths[0])}\``);
+Windows PowerShell: \`Get-FileHash .\\<downloaded-file> -Algorithm SHA256\`
+macOS/Linux: \`shasum -a 256 <downloaded-file>\``);

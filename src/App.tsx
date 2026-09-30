@@ -23,6 +23,7 @@ import {
   isFullscreenActive,
   isTauriRuntime,
   listen,
+  platformSupportNote,
   setAutostartEnabled,
   showNativeReminder,
   type PlatformCapabilities,
@@ -333,11 +334,7 @@ export default function App() {
             onReset={resetSettings}
             autostartAvailable={isTauriRuntime()}
             onAutostartChange={changeAutostart}
-            supportNote={
-              platformCaps && !platformCaps.idle_supported
-                ? 'Idle and fullscreen detection isn\u2019t available on this platform yet. Timers keep running while the app is open.'
-                : null
-            }
+            supportNote={platformCaps ? platformSupportNote(platformCaps) : null}
           />
         )}
       </main>

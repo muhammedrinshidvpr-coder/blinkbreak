@@ -7,6 +7,7 @@ import {
   isFullscreenActive,
   isTauriRuntime,
   listen,
+  platformSupportNote,
   setAutostartEnabled,
   showNativeReminder,
 } from './native';
@@ -41,5 +42,11 @@ describe('native bridge outside Tauri (browser/jsdom)', () => {
 
   it('platform capabilities are null outside Tauri', async () => {
     await expect(getPlatformCapabilities()).resolves.toBeNull();
+  });
+
+  it('describes only platform signals that are unsupported', () => {
+    expect(platformSupportNote({ platform: 'windows', idle_supported: true, fullscreen_supported: true })).toBeNull();
+    expect(platformSupportNote({ platform: 'macos', idle_supported: false, fullscreen_supported: true })).toBe("Idle-time detection isn't available on macos yet, so timers count while BlinkBreak is open.");
+    expect(platformSupportNote({ platform: 'linux', idle_supported: false, fullscreen_supported: false })).toBe("Idle-time detection isn't available on linux yet, so timers count while BlinkBreak is open. Fullscreen detection isn't available on linux yet, so reminders can't defer during fullscreen sessions.");
   });
 });

@@ -17,8 +17,8 @@ A small, private desktop app for long screen sessions. Windows, macOS, and Linux
 
 ## Why BlinkBreak?
 
-- **Private.** No internet, no account, no tracking. Nothing leaves your PC.
-- **Quiet.** Reminders never take your keyboard focus, and they wait while a fullscreen game, video, or presentation is open.
+- **Private.** No internet, no account, no tracking. Nothing leaves your computer.
+- **Quiet.** Reminders are designed not to take keyboard focus. Fullscreen deferral is currently supported on Windows.
 - **Brief.** Every reminder leaves on its own when its time is up.
 
 ## Reminders
@@ -47,7 +47,7 @@ count as done, because following the countdown *is* the exercise.
 
 ## Light and dark
 
-BlinkBreak follows Windows by default. Choose **Settings → Appearance → Light** or **Dark** to set it yourself.
+BlinkBreak follows your system appearance by default. Choose **Settings → Appearance → Light** or **Dark** to set it yourself.
 
 <p align="center">
   <img src="docs/screenshots/app-light.png" alt="Reminders tab in the light theme" width="49%">
@@ -62,8 +62,8 @@ BlinkBreak follows Windows by default. Choose **Settings → Appearance → Ligh
    Windows (`BlinkBreak_x.y.z_x64-setup.exe`, about 2 MB), macOS (`BlinkBreak_x.y.z_x64.dmg`
    or Apple Silicon `..._aarch64.dmg`), or Linux (`.deb` or portable `.AppImage`).
 2. Run/install it. Windows needs no admin rights and installs just for you; on macOS drag
-   BlinkBreak to Applications; on Linux install the `.deb` or mark the `.AppImage` executable.
-   macOS builds aren't Apple-notarized yet, and Linux Wayland sensing is limited (see below).
+    BlinkBreak to Applications; on Linux install the `.deb` or mark the `.AppImage` executable.
+    macOS release DMGs are signed and notarized. System-wide idle/fullscreen sensing is not yet implemented on macOS/Linux (see below).
 3. BlinkBreak starts in your **system tray / menu bar**.
    Right-click it for **Open dashboard**, **Take a break now**, **Pause 15 min**, and **Quit**.
 
@@ -82,9 +82,9 @@ source; the code is short enough to read.
 <details>
 <summary><b>Will it interrupt my game, movie, or presentation?</b></summary>
 
-No. If a fullscreen app is in front, reminders wait until you leave
-fullscreen. Reminders also never take keyboard focus, so your typing keeps
-going where it was.
+On Windows, if a fullscreen app is in front, reminders wait until you leave
+fullscreen. macOS/Linux do not have system-wide fullscreen detection yet.
+Reminders are designed not to take keyboard focus, so your typing keeps going where it was.
 </details>
 
 <details>
@@ -115,7 +115,7 @@ Quit it from the tray first.
 
 None. The only thing it reads from your OS is how many seconds since your last
 keyboard/mouse input (to know whether you're active). Idle sensing is fully supported on
-Windows; on macOS and Linux Wayland it is limited for now, and the app says so in Settings.
+Windows; it is not implemented on macOS or Linux yet, and the app says so in Settings.
 Settings and daily stats stay on your machine.
 </details>
 

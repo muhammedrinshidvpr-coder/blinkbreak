@@ -65,6 +65,16 @@ export interface PlatformCapabilities {
   fullscreen_supported: boolean;
 }
 
+export function platformSupportNote(capabilities: PlatformCapabilities): string | null {
+  const limitations = [
+    !capabilities.idle_supported
+      && `Idle-time detection isn't available on ${capabilities.platform} yet, so timers count while BlinkBreak is open.`,
+    !capabilities.fullscreen_supported
+      && `Fullscreen detection isn't available on ${capabilities.platform} yet, so reminders can't defer during fullscreen sessions.`,
+  ].filter((limitation): limitation is string => Boolean(limitation));
+  return limitations.length > 0 ? limitations.join(' ') : null;
+}
+
 /** Which OS-level signals the native shell actually supports. Null outside Tauri. */
 export async function getPlatformCapabilities(): Promise<PlatformCapabilities | null> {
   if (!isTauriRuntime()) return null;

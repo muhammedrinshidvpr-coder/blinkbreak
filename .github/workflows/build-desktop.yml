@@ -34,7 +34,11 @@ jobs:
             path: src-tauri/target/release/bundle/nsis/*.exe
           - os: macos-latest
             bundle: dmg
-            artifact: BlinkBreak-macos-dmg
+            artifact: BlinkBreak-macos-arm64-dmg
+            path: src-tauri/target/release/bundle/dmg/*.dmg
+          - os: macos-15-intel
+            bundle: dmg
+            artifact: BlinkBreak-macos-x64-dmg
             path: src-tauri/target/release/bundle/dmg/*.dmg
           - os: ubuntu-22.04
             bundle: deb,appimage

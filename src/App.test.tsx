@@ -4,6 +4,7 @@ import { cloneSettings, DEFAULT_SETTINGS } from './lib/types';
 
 const native = vi.hoisted(() => ({
   fullscreen: true,
+  platformCapabilities: { platform: 'windows', idle_supported: true, fullscreen_supported: true },
   showNativeReminder: vi.fn(async () => true),
   isFullscreenActive: vi.fn(async () => native.fullscreen),
 }));
@@ -12,7 +13,10 @@ vi.mock('./lib/native', () => ({
   emitReminderAction: vi.fn(async () => undefined),
   getAutostartEnabled: vi.fn(async () => null),
   getIdleSeconds: vi.fn(async () => 0),
-  getPlatformCapabilities: vi.fn(async () => ({ platform: 'windows', idle_supported: true, fullscreen_supported: true })),
+  getPlatformCapabilities: vi.fn(async () => native.platformCapabilities),
+  platformSupportNote: (caps: typeof native.platformCapabilities) => !caps.idle_supported
+    ? `Idle-time detection isn't available on ${caps.platform} yet, so timers count while BlinkBreak is open. Fullscreen detection isn't available on ${caps.platform} yet, so reminders can't defer during fullscreen sessions.`
+    : null,
   getWindowLabel: vi.fn(async () => 'main'),
   hideNativeReminder: vi.fn(async () => undefined),
   isFullscreenActive: native.isFullscreenActive,
@@ -40,6 +44,7 @@ describe('App reminder orchestration', () => {
     vi.setSystemTime(new Date(2026, 8, 30, 9, 0, 0));
     localStorage.clear();
     native.fullscreen = true;
+    native.platformCapabilities = { platform: 'windows', idle_supported: true, fullscreen_supported: true };
     native.showNativeReminder.mockClear();
     native.isFullscreenActive.mockClear();
   });
@@ -94,5 +99,16 @@ describe('App reminder orchestration', () => {
 
     expect(screen.getByTestId('how-it-works')).toBeInTheDocument();
     expect(screen.getByRole('heading', { name: 'You keep your focus. Small pauses keep the rhythm.' })).toBeInTheDocument();
+  });
+
+  it('shows platform limitations in Settings when native sensing is unsupported', async () => {
+    native.platformCapabilities = { platform: 'linux', idle_supported: false, fullscreen_supported: false };
+    render(<App />);
+    await flushPoll();
+
+    fireEvent.click(screen.getByTestId('tab-settings'));
+
+    expect(screen.getByTestId('settings-platform-note')).toHaveTextContent('timers count while BlinkBreak is open');
+    expect(screen.getByTestId('settings-platform-note')).toHaveTextContent('reminders can\'t defer during fullscreen');
   });
 });

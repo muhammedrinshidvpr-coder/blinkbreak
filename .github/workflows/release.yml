@@ -18,12 +18,19 @@ jobs:
         include:
           - os: windows-latest
             bundles: nsis
+            artifact: release-windows-x64
             out-dir: src-tauri/target/release/bundle/nsis
           - os: macos-latest
             bundles: dmg
+            artifact: release-macos-arm64
+            out-dir: src-tauri/target/release/bundle/dmg
+          - os: macos-15-intel
+            bundles: dmg
+            artifact: release-macos-x64
             out-dir: src-tauri/target/release/bundle/dmg
           - os: ubuntu-22.04
             bundles: deb,appimage
+            artifact: release-linux-x64
             out-dir: src-tauri/target/release/bundle
     runs-on: ${{ matrix.os }}
     steps:
@@ -52,12 +59,43 @@ jobs:
           if [ "$app" != "$GITHUB_REF_NAME" ]; then
             echo "Tag $GITHUB_REF_NAME does not match tauri.conf.json version $app"; exit 1
           fi
-      - name: Build Tauri app
+      - name: Verify Apple signing secrets are configured
+        if: matrix.os == 'macos-latest' || matrix.os == 'macos-15-intel'
+        env:
+          APPLE_CERTIFICATE: ${{ secrets.APPLE_CERTIFICATE }}
+          APPLE_CERTIFICATE_PASSWORD: ${{ secrets.APPLE_CERTIFICATE_PASSWORD }}
+          APPLE_SIGNING_IDENTITY: ${{ secrets.APPLE_SIGNING_IDENTITY }}
+          APPLE_API_ISSUER: ${{ secrets.APPLE_API_ISSUER }}
+          APPLE_API_KEY: ${{ secrets.APPLE_API_KEY }}
+          APPLE_API_KEY_BASE64: ${{ secrets.APPLE_API_KEY_BASE64 }}
+        run: |
+          for name in APPLE_CERTIFICATE APPLE_CERTIFICATE_PASSWORD APPLE_SIGNING_IDENTITY APPLE_API_ISSUER APPLE_API_KEY APPLE_API_KEY_BASE64; do
+            if [ -z "${!name}" ]; then echo "Missing required GitHub secret: $name"; exit 1; fi
+          done
+      - name: Prepare Apple notarization key
+        if: matrix.os == 'macos-latest' || matrix.os == 'macos-15-intel'
+        env:
+          APPLE_API_KEY_BASE64: ${{ secrets.APPLE_API_KEY_BASE64 }}
+        run: |
+          key_path="$RUNNER_TEMP/AuthKey.p8"
+          echo "$APPLE_API_KEY_BASE64" | base64 -D > "$key_path"
+          echo "APPLE_API_KEY_PATH=$key_path" >> "$GITHUB_ENV"
+      - name: Build signed and notarized macOS app
+        if: matrix.os == 'macos-latest' || matrix.os == 'macos-15-intel'
+        env:
+          APPLE_CERTIFICATE: ${{ secrets.APPLE_CERTIFICATE }}
+          APPLE_CERTIFICATE_PASSWORD: ${{ secrets.APPLE_CERTIFICATE_PASSWORD }}
+          APPLE_SIGNING_IDENTITY: ${{ secrets.APPLE_SIGNING_IDENTITY }}
+          APPLE_API_ISSUER: ${{ secrets.APPLE_API_ISSUER }}
+          APPLE_API_KEY: ${{ secrets.APPLE_API_KEY }}
+        run: npm run tauri build -- --bundles ${{ matrix.bundles }}
+      - name: Build Windows or Linux app
+        if: matrix.os != 'macos-latest' && matrix.os != 'macos-15-intel'
         run: npm run tauri build -- --bundles ${{ matrix.bundles }}
       - name: Upload platform bundles
         uses: actions/upload-artifact@v7
         with:
-          name: release-${{ matrix.os }}
+          name: ${{ matrix.artifact }}
           path: ${{ matrix.out-dir }}
           if-no-files-found: error
 

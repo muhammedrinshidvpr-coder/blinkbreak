@@ -32,12 +32,12 @@ The whole source code is public on GitHub for anyone to check.
 
 Then follow the installer. It only takes a few seconds.
 
-**macOS:** open the `.dmg` and drag BlinkBreak to Applications. These builds are not
-Apple-notarized yet; if macOS blocks the app, right-click it and choose Open.
+**macOS:** open the `.dmg` and drag BlinkBreak to Applications. Published release DMGs are
+signed and notarized by Apple.
 
 **Linux:** install the `.deb` (`sudo apt install ./blinkbreak_x.y.z_amd64.deb`) or make the
-`.AppImage` executable and run it. On Wayland, idle and fullscreen detection are limited:
-timers keep running while the app is open, and Settings says so.
+`.AppImage` executable and run it. System-wide idle and fullscreen detection are not
+implemented on Linux yet: timers count while the app is open, and Settings explains this.
 
 ## 3. Use it
 
