@@ -12,6 +12,7 @@ vi.mock('./lib/native', () => ({
   emitReminderAction: vi.fn(async () => undefined),
   getAutostartEnabled: vi.fn(async () => null),
   getIdleSeconds: vi.fn(async () => 0),
+  getPlatformCapabilities: vi.fn(async () => ({ platform: 'windows', idle_supported: true, fullscreen_supported: true })),
   getWindowLabel: vi.fn(async () => 'main'),
   hideNativeReminder: vi.fn(async () => undefined),
   isFullscreenActive: native.isFullscreenActive,

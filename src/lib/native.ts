@@ -59,6 +59,23 @@ export async function isFullscreenActive(): Promise<boolean> {
   }
 }
 
+export interface PlatformCapabilities {
+  platform: string;
+  idle_supported: boolean;
+  fullscreen_supported: boolean;
+}
+
+/** Which OS-level signals the native shell actually supports. Null outside Tauri. */
+export async function getPlatformCapabilities(): Promise<PlatformCapabilities | null> {
+  if (!isTauriRuntime()) return null;
+  try {
+    const { invoke } = await import('@tauri-apps/api/core');
+    return await invoke<PlatformCapabilities>('get_platform_capabilities');
+  } catch {
+    return null;
+  }
+}
+
 export async function emitReminderAction(payload: { kind: string; action: string }): Promise<void> {
   if (!isTauriRuntime()) return;
   const { emit } = await import('@tauri-apps/api/event');

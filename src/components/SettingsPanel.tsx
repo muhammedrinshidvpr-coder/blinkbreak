@@ -84,14 +84,17 @@ export function SettingsPanel({
   onReset,
   autostartAvailable = false,
   onAutostartChange,
+  supportNote = null,
 }: {
   settings: AppSettings;
   onChange: (s: AppSettings) => void;
   onReset: () => void;
-  /** Start-with-Windows only exists in the desktop app. */
+  /** Login autostart only exists in the desktop app. */
   autostartAvailable?: boolean;
-  /** Applies the change in Windows; resolves once the OS accepted it, rejects otherwise. */
+  /** Applies the change in the OS; resolves once the OS accepted it, rejects otherwise. */
   onAutostartChange?: (enabled: boolean) => Promise<void>;
+  /** Honest note when the current platform lacks idle/fullscreen sensing. */
+  supportNote?: string | null;
 }) {
   const [autostartPending, setAutostartPending] = useState(false);
   const [autostartError, setAutostartError] = useState<string | null>(null);
@@ -107,7 +110,7 @@ export function SettingsPanel({
     try {
       await onAutostartChange(enabled);
     } catch {
-      setAutostartError("Windows didn't accept the change. Please try again.");
+      setAutostartError("The system didn't accept the change. Please try again.");
     } finally {
       setAutostartPending(false);
     }
@@ -195,13 +198,16 @@ export function SettingsPanel({
         note={
           autostartError
             ? <p className="bb-note is-error" role="alert" data-testid="settings-autostart-error">{autostartError}</p>
-            : !autostartAvailable && <p className="bb-note">Available in the desktop app.</p>
+            : <>
+                {!autostartAvailable && <p className="bb-note">Available in the desktop app.</p>}
+                {supportNote && <p className="bb-note" data-testid="settings-platform-note">{supportNote}</p>}
+              </>
         }
       >
-        <label className={`bb-item ${autostartAvailable ? '' : 'is-disabled'}`} title="Launch BlinkBreak in the system tray when you sign in to Windows">
-          <span>Start with Windows</span>
+        <label className={`bb-item ${autostartAvailable ? '' : 'is-disabled'}`} title="Launch BlinkBreak when you sign in">
+          <span>Start at login</span>
           <Switch
-            label="Start with Windows"
+            label="Start at login"
             testId="settings-autostart"
             checked={settings.autostart}
             disabled={!autostartAvailable || autostartPending}

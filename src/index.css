@@ -398,7 +398,7 @@ html.bb-overlay-document .bb-toast, html.bb-overlay-document .bb-overlay-card {
 
 /* ---------- Reduced motion: short fades only; the ring keeps draining ----------
    `.reduced-motion` comes from a reminder's props; `html.bb-reduce-motion` from the app
-   setting; the media query from Windows. Components also check the OS setting in JS. */
+   setting; the media query from the OS. Components also check the OS setting in JS. */
 
 .reduced-motion.bb-toast, .reduced-motion.bb-overlay, .reduced-motion .bb-overlay-card, .reduced-motion .bb-reminder-line {
   animation: bb-fade-in .12s linear both;

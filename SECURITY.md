@@ -27,4 +27,5 @@ fullscreen detection), so reports are welcome.
 
 BlinkBreak intentionally collects nothing: no telemetry, no crash reporting,
 no accounts, no network requests. The only OS signal it reads is idle seconds
-(via Win32 `GetLastInputInfo`) to tell active use apart from idle time.
+(on Windows via Win32 `GetLastInputInfo`; macOS/Linux backends are planned) to
+tell active use apart from idle time.

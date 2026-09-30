@@ -3,12 +3,12 @@
 # BlinkBreak
 
 **Calm reminders to blink, look away, and move.**<br>
-A small, private Windows app for long screen sessions.
+A small, private desktop app for long screen sessions. Windows, macOS, and Linux builds share the same calm UI.
 
-[![Download for Windows](https://img.shields.io/badge/Download-Windows-1d1d1f?style=for-the-badge&logo=windows)](https://github.com/muhammedrinshidvpr-coder/blinkbreak/releases/latest)
+[![Download](https://img.shields.io/badge/Download-Windows_%7C_macOS_%7C_Linux-1d1d1f?style=for-the-badge)](https://github.com/muhammedrinshidvpr-coder/blinkbreak/releases/latest)
 
 [![Latest release](https://img.shields.io/github/v/release/muhammedrinshidvpr-coder/blinkbreak?color=7f9f8f)](https://github.com/muhammedrinshidvpr-coder/blinkbreak/releases/latest)
-[![Build](https://github.com/muhammedrinshidvpr-coder/blinkbreak/actions/workflows/build-windows.yml/badge.svg)](https://github.com/muhammedrinshidvpr-coder/blinkbreak/actions/workflows/build-windows.yml)
+[![Build](https://github.com/muhammedrinshidvpr-coder/blinkbreak/actions/workflows/build-desktop.yml/badge.svg)](https://github.com/muhammedrinshidvpr-coder/blinkbreak/actions/workflows/build-desktop.yml)
 ![License: MIT](https://img.shields.io/badge/license-MIT-7f9f8f)
 
 <img src="docs/screenshots/blink-demo.gif" alt="A small pill at the top of the screen: an eye blinks slowly inside a thin ring that drains, then the pill fades away" width="480">
@@ -58,10 +58,13 @@ BlinkBreak follows Windows by default. Choose **Settings → Appearance → Ligh
 
 **New to this?** Follow the [step-by-step install guide](docs/INSTALL.md). It takes about a minute.
 
-1. **[Download the latest installer](https://github.com/muhammedrinshidvpr-coder/blinkbreak/releases/latest)**
-   (`BlinkBreak_x.y.z_x64-setup.exe`, about 2 MB).
-2. Run it. No admin rights needed; it installs just for you.
-3. BlinkBreak starts in your **system tray** (bottom right, maybe under the ^ arrow).
+1. **[Download the latest installer](https://github.com/muhammedrinshidvpr-coder/blinkbreak/releases/latest)**:
+   Windows (`BlinkBreak_x.y.z_x64-setup.exe`, about 2 MB), macOS (`BlinkBreak_x.y.z_x64.dmg`
+   or Apple Silicon `..._aarch64.dmg`), or Linux (`.deb` or portable `.AppImage`).
+2. Run/install it. Windows needs no admin rights and installs just for you; on macOS drag
+   BlinkBreak to Applications; on Linux install the `.deb` or mark the `.AppImage` executable.
+   macOS builds aren't Apple-notarized yet, and Linux Wayland sensing is limited (see below).
+3. BlinkBreak starts in your **system tray / menu bar**.
    Right-click it for **Open dashboard**, **Take a break now**, **Pause 15 min**, and **Quit**.
 
 ## FAQ
@@ -93,30 +96,35 @@ appears, set quiet hours, and pick light or dark.
 </details>
 
 <details>
-<summary><b>Does it start with Windows?</b></summary>
+<summary><b>Does it start at login?</b></summary>
 
-Yes, by default, quietly in the tray. Turn it off in **Settings → Start with Windows**.
+Yes, by default, quietly in the tray / menu bar. Turn it off in **Settings → Start at login**.
 </details>
 
 <details>
 <summary><b>How do I uninstall it?</b></summary>
 
 Windows **Settings → Apps → Installed apps → BlinkBreak → Uninstall**.
+On macOS delete BlinkBreak from Applications; on Linux remove the `.deb` (`sudo apt remove blinkbreak`)
+or delete the `.AppImage`.
 Quit it from the tray first.
 </details>
 
 <details>
 <summary><b>What data does it collect?</b></summary>
 
-None. The only thing it reads from Windows is how many seconds since your last
-keyboard/mouse input (to know whether you're active). Settings and daily stats
-stay on your machine.
+None. The only thing it reads from your OS is how many seconds since your last
+keyboard/mouse input (to know whether you're active). Idle sensing is fully supported on
+Windows; on macOS and Linux Wayland it is limited for now, and the app says so in Settings.
+Settings and daily stats stay on your machine.
 </details>
 
 <details>
-<summary><b>Mac or Linux?</b></summary>
+<summary><b>Mac or Linux limitations?</b></summary>
 
-Not yet. It's Windows-only today. Follow or help with
+Both install and remind normally, but system-wide idle and fullscreen detection are only
+implemented on Windows so far. On other platforms timers keep running while the app is open.
+Native macOS/Linux sensing is tracked in
 [issue #5](https://github.com/muhammedrinshidvpr-coder/blinkbreak/issues/5).
 </details>
 
@@ -137,11 +145,24 @@ npm run lint    # TypeScript check
 npm run dev     # browser demo at http://localhost:1420
 ```
 
-Desktop app (needs [Rust](https://rustup.rs) stable MSVC + Visual Studio C++ build tools):
+Desktop app (needs [Rust](https://rustup.rs) stable; Windows also needs MSVC + Visual Studio C++ build tools):
 
 ```powershell
 npm run tauri dev     # run the desktop app with hot reload
-npm run tauri build   # -> src-tauri/target/release/bundle/nsis/BlinkBreak_*_setup.exe
+npm run tauri build   # Windows -> src-tauri/target/release/bundle/nsis/BlinkBreak_*_setup.exe
+```
+
+Linux needs WebKitGTK system packages first (Debian/Ubuntu):
+
+```bash
+sudo apt install libwebkit2gtk-4.1-dev build-essential curl wget file libxdo-dev libssl-dev libayatana-appindicator3-dev librsvg2-dev
+npm run tauri build -- --bundles deb,appimage
+```
+
+macOS:
+
+```bash
+npm run tauri build -- --bundles dmg
 ```
 
 > Only one BlinkBreak can run at a time. Quit the installed copy from the tray

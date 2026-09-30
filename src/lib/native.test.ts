@@ -2,6 +2,7 @@ import { describe, expect, it } from 'vitest';
 import {
   getAutostartEnabled,
   getIdleSeconds,
+  getPlatformCapabilities,
   hideNativeReminder,
   isFullscreenActive,
   isTauriRuntime,
@@ -36,5 +37,9 @@ describe('native bridge outside Tauri (browser/jsdom)', () => {
     await expect(getAutostartEnabled()).resolves.toBeNull();
     await expect(setAutostartEnabled(true)).resolves.toBe(false);
     await expect(setAutostartEnabled(false)).resolves.toBe(false);
+  });
+
+  it('platform capabilities are null outside Tauri', async () => {
+    await expect(getPlatformCapabilities()).resolves.toBeNull();
   });
 });
