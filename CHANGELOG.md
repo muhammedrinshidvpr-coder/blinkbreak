@@ -6,6 +6,29 @@ All notable changes to BlinkBreak are listed here. The format follows
 
 ## [Unreleased]
 
+## [0.4.0] - 2026-09-30
+
+A calmer study rhythm: related reminders no longer pile up, and the app now explains
+how its screen-health routine works.
+
+### Added
+- A **Story** tab that follows a focused session from blinking and distance breaks through
+  posture, movement, and a longer rest.
+- Clear in-app explanations of active-use timing, interruption protections, local-only
+  privacy, and the limits of the app's health guidance.
+
+### Changed
+- When several reminders become due together, BlinkBreak shows the highest-priority break
+  and treats the other due reminders as covered instead of building a backlog.
+- Automatic reminders now have at least five minutes of active computer use between them.
+- The dashboard's next-reminder estimate includes that quiet spacing and resolves ties using
+  the same health priority as the scheduler.
+
+### Fixed
+- A reminder deferred by fullscreen mode no longer freezes the other reminder timers; a more
+  important break can replace it while it waits.
+- Deferred reminders now continue to respect a newly started pause or quiet hours.
+
 ## [0.3.0] - 2026-09-26
 
 A polish release: easier to read, easier to use with a keyboard, and calmer motion.
@@ -74,7 +97,8 @@ First public release.
   start with Windows (minimized to tray).
 - Local-only daily stats. No network, accounts, or telemetry.
 
-[Unreleased]: https://github.com/muhammedrinshidvpr-coder/blinkbreak/compare/v0.3.0...HEAD
+[Unreleased]: https://github.com/muhammedrinshidvpr-coder/blinkbreak/compare/v0.4.0...HEAD
+[0.4.0]: https://github.com/muhammedrinshidvpr-coder/blinkbreak/compare/v0.3.0...v0.4.0
 [0.3.0]: https://github.com/muhammedrinshidvpr-coder/blinkbreak/compare/v0.2.0...v0.3.0
 [0.2.0]: https://github.com/muhammedrinshidvpr-coder/blinkbreak/compare/v0.1.0...v0.2.0
 [0.1.0]: https://github.com/muhammedrinshidvpr-coder/blinkbreak/releases/tag/v0.1.0
