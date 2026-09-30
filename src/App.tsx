@@ -36,6 +36,7 @@ import { Dashboard, type ScheduleStatus } from './components/Dashboard';
 import { SegmentedControl } from './components/SegmentedControl';
 import { SettingsPanel } from './components/SettingsPanel';
 import { Gallery } from './components/Gallery';
+import { HowItWorks } from './components/HowItWorks';
 import { EyeSymbol } from './components/symbols';
 
 const STATS_KEY = 'blinkbreak.stats.v1';
@@ -48,6 +49,7 @@ function todayKey(d = new Date()): string {
 const TABS = [
   { id: 'today', label: 'Today' },
   { id: 'gallery', label: 'Reminders' },
+  { id: 'story', label: 'Story' },
   { id: 'settings', label: 'Settings' },
 ] as const;
 type Tab = (typeof TABS)[number]['id'];
@@ -211,17 +213,22 @@ export default function App() {
       }
       setStats((prev) => ({ ...prev, activeSec: prev.activeSec + activity.activeSec }));
 
-      if (pendingReminderRef.current && !reminderVisibleRef.current) {
-        await presentReminder(pendingReminderRef.current);
-        running = false;
-        return;
-      }
       if (reminderVisibleRef.current) {
         running = false;
         return;
       }
 
       const ev = tick(schedRef.current, settings, now, activity.activeSec);
+      if (pendingReminderRef.current) {
+        if (ev && settings.reminders[ev.kind].priority > settings.reminders[pendingReminderRef.current.kind].priority) {
+          pendingReminderRef.current = ev;
+        }
+        if (!isPaused(settings, now) && !inQuietHours(settings, new Date(now))) {
+          await presentReminder(pendingReminderRef.current);
+        }
+        running = false;
+        return;
+      }
       if (ev) await presentReminder(ev);
       running = false;
     };
@@ -312,6 +319,7 @@ export default function App() {
           />
         )}
         {tab === 'gallery' && <Gallery settings={settings} />}
+        {tab === 'story' && <HowItWorks />}
         {tab === 'settings' && (
           <SettingsPanel
             settings={settings}

@@ -6,6 +6,7 @@ import { SettingsPanel } from './SettingsPanel';
 import { BreathSymbol, EyeSymbol, HorizonSymbol, SpineSymbol, StretchSymbol, ProgressRing } from './symbols';
 import { Gallery } from './Gallery';
 import { NativeReminder } from './NativeReminder';
+import { HowItWorks } from './HowItWorks';
 import { EXIT_MS } from './useSettleOnce';
 import { DEFAULT_SETTINGS, cloneSettings } from '../lib/types';
 
@@ -86,6 +87,23 @@ describe('Gallery', () => {
   it('rests still until a tile is hovered or focused', () => {
     render(<Gallery settings={cloneSettings(DEFAULT_SETTINGS)} />);
     expect(screen.getByTestId('spine-mid').getAttribute('cx')).toBe('20');
+  });
+});
+
+describe('HowItWorks', () => {
+  it('tells the health story and explains its calm, private behavior', () => {
+    render(<HowItWorks />);
+
+    expect(screen.getByRole('heading', { name: 'You keep your focus. Small pauses keep the rhythm.' })).toBeInTheDocument();
+    expect(screen.getByTestId('how-it-works')).toHaveTextContent('active computer use');
+    expect(screen.getByText(/at least five active minutes/i)).toBeInTheDocument();
+    expect(screen.getByText(/There is no camera, account, cloud/i)).toBeInTheDocument();
+    expect(screen.getByText(/not a medical device/i)).toBeInTheDocument();
+    expect(screen.getByTestId('eye-symbol')).toBeInTheDocument();
+    expect(screen.getByTestId('horizon-dot')).toBeInTheDocument();
+    expect(screen.getByTestId('spine-mid')).toBeInTheDocument();
+    expect(screen.getByTestId('stretch-arms')).toBeInTheDocument();
+    expect(screen.getByTestId('breath-circle')).toBeInTheDocument();
   });
 });
 

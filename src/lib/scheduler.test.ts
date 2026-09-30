@@ -1,5 +1,13 @@
 import { describe, it, expect } from 'vitest';
-import { createSchedulerState, tick, applyAction, nextDue, nextDueInSec, inQuietHours } from './scheduler';
+import {
+  MIN_REMINDER_SPACING_SEC,
+  createSchedulerState,
+  tick,
+  applyAction,
+  nextDue,
+  nextDueInSec,
+  inQuietHours,
+} from './scheduler';
 import { DEFAULT_SETTINGS, cloneSettings } from './types';
 
 describe('scheduler timing', () => {
@@ -24,6 +32,43 @@ describe('scheduler timing', () => {
     const st = createSchedulerState();
     const ev = tick(st, s, Date.now(), 20 * 60);
     expect(ev?.kind).toBe('lookaway');
+  });
+
+  it('coalesces simultaneous reminders and leaves five active minutes of breathing room', () => {
+    const s = cloneSettings(DEFAULT_SETTINGS);
+    const st = createSchedulerState();
+    const t0 = Date.now();
+
+    const ev = tick(st, s, t0, 60 * 60);
+    expect(ev?.kind).toBe('move');
+    expect(st.accruedSec).toEqual({ blink: 0, lookaway: 0, posture: 0, move: 0, rest: 60 * 60 });
+    applyAction(st, s, 'move', 'done');
+    expect(nextDue(st, s, t0)).toEqual({ kind: 'blink', inSec: MIN_REMINDER_SPACING_SEC });
+
+    expect(tick(st, s, t0 + 1000, MIN_REMINDER_SPACING_SEC - 1)).toBeNull();
+    expect(tick(st, s, t0 + 2000, 1)?.kind).toBe('blink');
+  });
+
+  it('reports global spacing when a reminder would otherwise be due sooner', () => {
+    const s = cloneSettings(DEFAULT_SETTINGS);
+    const st = createSchedulerState();
+    st.accruedSec.blink = s.reminders.blink.intervalSec - 1;
+    st.spacingRemainingSec = MIN_REMINDER_SPACING_SEC;
+
+    expect(nextDue(st, s, Date.now())).toEqual({ kind: 'blink', inSec: MIN_REMINDER_SPACING_SEC });
+  });
+
+  it('predicts the highest-priority reminder when spacing makes several eligible together', () => {
+    const s = cloneSettings(DEFAULT_SETTINGS);
+    const st = createSchedulerState();
+    s.reminders.blink.intervalSec = 60;
+    s.reminders.lookaway.intervalSec = 120;
+    s.reminders.posture.enabled = false;
+    s.reminders.move.enabled = false;
+    s.reminders.rest.enabled = false;
+    st.spacingRemainingSec = MIN_REMINDER_SPACING_SEC;
+
+    expect(nextDue(st, s, Date.now())).toEqual({ kind: 'lookaway', inSec: MIN_REMINDER_SPACING_SEC });
   });
 
   it('pause suppresses all reminders', () => {

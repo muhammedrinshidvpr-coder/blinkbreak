@@ -2,7 +2,8 @@
  * Gentle scheduler.
  * CONTRACT:
  * - GUARANTEES: counts only active-use seconds; one due reminder at a time;
- *   sleep gaps never produce reminder floods (max one emitted per tick).
+ *   automatic reminders are separated by five active-use minutes; simultaneous
+ *   reminders are coalesced into the highest-priority health break.
  * - EXPECTS: caller advances time monotonically via tick(nowMs, activeSec).
  * - DOES NOT: touch DOM, windows, or system clocks.
  */
@@ -11,14 +12,18 @@ import { AppSettings, ReminderEvent, ReminderKind, REMINDER_META } from './types
 export interface SchedulerState {
   /** Active-use seconds accumulated toward each kind since last due/dismiss */
   accruedSec: Record<ReminderKind, number>;
+  /** Active-use seconds before any reminder may follow the previous one. */
+  spacingRemainingSec: number;
   lastTickMs: number | null;
 }
 
 const KINDS: ReminderKind[] = ['blink', 'lookaway', 'posture', 'move', 'rest'];
+export const MIN_REMINDER_SPACING_SEC = 5 * 60;
 
 export function createSchedulerState(): SchedulerState {
   return {
     accruedSec: { blink: 0, lookaway: 0, posture: 0, move: 0, rest: 0 },
+    spacingRemainingSec: 0,
     lastTickMs: null,
   };
 }
@@ -72,6 +77,9 @@ export function tick(
     state.accruedSec[kind] = Math.max(0, state.accruedSec[kind] + Math.max(0, add));
   }
 
+  state.spacingRemainingSec = Math.max(0, state.spacingRemainingSec - activeSec);
+  if (state.spacingRemainingSec > 0) return null;
+
   const due = KINDS.filter((k) => {
     const def = settings.reminders[k];
     return def.enabled && state.accruedSec[k] >= def.intervalSec;
@@ -79,11 +87,8 @@ export function tick(
 
   if (due.length === 0) return null;
   const winner = due[0];
-  // Reset winner; decay others slightly so a second reminder can surface soon but not instantly.
-  state.accruedSec[winner] = 0;
-  for (const k of due.slice(1)) {
-    state.accruedSec[k] = settings.reminders[k].intervalSec * 0.9;
-  }
+  // One comprehensive break covers every smaller reminder already due.
+  for (const kind of due) state.accruedSec[kind] = 0;
   return {
     kind: winner,
     dueAtMs: nowMs,
@@ -100,6 +105,7 @@ export function applyAction(
   action: 'done' | 'skip' | 'snooze',
 ): void {
   const def = settings.reminders[kind];
+  state.spacingRemainingSec = MIN_REMINDER_SPACING_SEC;
   if (action === 'snooze') {
     // Negative accrual = must accumulate snoozeSec before reaching interval.
     state.accruedSec[kind] = def.intervalSec - def.snoozeSec;
@@ -120,10 +126,16 @@ export function nextDue(
   for (const kind of KINDS) {
     const def = settings.reminders[kind];
     if (!def.enabled) continue;
-    const remain = def.intervalSec - state.accruedSec[kind];
-    if (best === null || remain < best.inSec) best = { kind, inSec: remain };
+    const inSec = Math.max(0, Math.round(def.intervalSec - state.accruedSec[kind]), Math.ceil(state.spacingRemainingSec));
+    if (
+      best === null
+      || inSec < best.inSec
+      || (inSec === best.inSec && def.priority > settings.reminders[best.kind].priority)
+    ) {
+      best = { kind, inSec };
+    }
   }
-  return best && { kind: best.kind, inSec: Math.max(0, Math.round(best.inSec)) };
+  return best;
 }
 
 /** Seconds until next due reminder (for tray tooltip / dashboard). Null when paused/all disabled. */
