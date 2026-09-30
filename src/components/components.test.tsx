@@ -112,6 +112,7 @@ describe('HowItWorks', () => {
     expect(screen.getByTestId('how-it-works')).toHaveTextContent('counts time while the app is open');
     expect(screen.getByTestId('how-it-works')).toHaveTextContent('cannot pause just because you step away');
     expect(screen.getByTestId('how-it-works')).toHaveTextContent('cannot detect or defer for fullscreen apps');
+    expect(screen.getByTestId('how-it-works')).toHaveTextContent('does not read system-wide keyboard or mouse idle time');
   });
 });
 

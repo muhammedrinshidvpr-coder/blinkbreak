@@ -340,7 +340,13 @@ export default function App() {
             onReset={resetSettings}
             autostartAvailable={isTauriRuntime()}
             onAutostartChange={changeAutostart}
-            supportNote={platformCaps ? platformSupportNote(platformCaps) : null}
+            supportNote={
+              platformCaps
+                ? platformSupportNote(platformCaps)
+                : isTauriRuntime()
+                  ? 'Platform support could not be confirmed. Treat idle and fullscreen detection as unavailable.'
+                  : null
+            }
           />
         )}
       </main>

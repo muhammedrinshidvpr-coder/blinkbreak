@@ -120,7 +120,10 @@ export function HowItWorks({
           <h2 id="privacy-title">It notices time, not you.</h2>
         </div>
         <p>
-          BlinkBreak reads only how long your keyboard and mouse have been idle. There is no camera, account, cloud,
+          {idleSensingSupported
+            ? 'BlinkBreak reads only how long your keyboard and mouse have been idle.'
+            : 'BlinkBreak does not read system-wide keyboard or mouse idle time on this platform yet.'}{' '}
+          There is no camera, account, cloud,
           app-name tracking, or key recording. Your settings and daily totals stay on this computer.
         </p>
       </section>
