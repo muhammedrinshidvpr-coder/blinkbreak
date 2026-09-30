@@ -320,13 +320,19 @@ export default function App() {
             activeSec={stats.activeSec}
             status={status}
             stats={stats}
+            idleDetectionSupported={platformCaps?.idle_supported ?? !isTauriRuntime()}
             onBreakNow={handleBreakNow}
             onPause={(min) => setSettings((s) => ({ ...s, pauseUntilMs: Date.now() + min * 60_000 }))}
             onResume={() => setSettings((s) => ({ ...s, pauseUntilMs: null }))}
           />
         )}
         {tab === 'gallery' && <Gallery settings={settings} />}
-        {tab === 'story' && <HowItWorks />}
+        {tab === 'story' && (
+          <HowItWorks
+            idleSensingSupported={platformCaps?.idle_supported ?? !isTauriRuntime()}
+            fullscreenSensingSupported={platformCaps?.fullscreen_supported ?? !isTauriRuntime()}
+          />
+        )}
         {tab === 'settings' && (
           <SettingsPanel
             settings={settings}

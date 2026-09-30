@@ -105,6 +105,14 @@ describe('HowItWorks', () => {
     expect(screen.getByTestId('stretch-arms')).toBeInTheDocument();
     expect(screen.getByTestId('breath-circle')).toBeInTheDocument();
   });
+
+  it('explains fallback timing and fullscreen limits without claiming active-use sensing', () => {
+    render(<HowItWorks idleSensingSupported={false} fullscreenSensingSupported={false} />);
+
+    expect(screen.getByTestId('how-it-works')).toHaveTextContent('counts time while the app is open');
+    expect(screen.getByTestId('how-it-works')).toHaveTextContent('cannot pause just because you step away');
+    expect(screen.getByTestId('how-it-works')).toHaveTextContent('cannot detect or defer for fullscreen apps');
+  });
 });
 
 describe('ReminderCard', () => {

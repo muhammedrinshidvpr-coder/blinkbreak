@@ -40,7 +40,8 @@ fit the reminder exactly, and a thin ring shows the time left.
 | Move | 60 min | 5 min | arms lift in one slow arc |
 | Long rest | 2 h | 10 min | a circle breathes: in for 4 s, out for 6 s |
 
-Timers count **active use only**, so they pause when you step away or your PC sleeps.
+On Windows, timers count **active use only**, so they pause when you step away or your PC sleeps.
+On macOS/Linux, system-wide idle sensing is not implemented yet, so timers count while the app is open.
 **Done** records the break, **Later** snoozes it (the length is shown), and clicking
 anywhere outside the card dismisses it. When time runs out, blink and look-away
 count as done, because following the countdown *is* the exercise.

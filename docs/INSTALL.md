@@ -51,8 +51,8 @@ On Windows the icons sit at the bottom-right of your screen; if you can't see it
 - **Pause 15 min**: handy for exams or online classes
 - **Quit**
 
-Reminders appear by themselves, stay a few seconds, and close on their own. They never
-interrupt your typing. On Windows they also wait if a fullscreen video, game, or presentation
+Reminders appear by themselves, stay a few seconds, and close on their own. They are designed
+not to steal typing focus. On Windows they also wait if a fullscreen video, game, or presentation
 is open; that detection isn't available on macOS/Linux yet.
 
 ## Handy settings
