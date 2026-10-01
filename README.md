@@ -40,8 +40,8 @@ fit the reminder exactly, and a thin ring shows the time left.
 | Move | 60 min | 5 min | arms lift in one slow arc |
 | Long rest | 2 h | 10 min | a circle breathes: in for 4 s, out for 6 s |
 
-On Windows, timers count **active use only**, so they pause when you step away or your PC sleeps.
-On macOS/Linux, system-wide idle sensing is not implemented yet, so timers count while the app is open.
+Windows and macOS timers count **active use only**, so they pause when you step away.
+Linux uses GNOME/Mutter or freedesktop ScreenSaver idle data when available; otherwise timers count while the app is open.
 **Done** records the break, **Later** snoozes it (the length is shown), and clicking
 anywhere outside the card dismisses it. When time runs out, blink and look-away
 count as done, because following the countdown *is* the exercise.
@@ -64,7 +64,7 @@ BlinkBreak follows your system appearance by default. Choose **Settings → Appe
    or Apple Silicon `..._aarch64.dmg`), or Linux (`.deb` or portable `.AppImage`).
 2. Run/install it. Windows needs no admin rights and installs just for you; on macOS drag
     BlinkBreak to Applications; on Linux install the `.deb` or mark the `.AppImage` executable.
-    macOS release DMGs are signed and notarized. System-wide idle/fullscreen sensing is not yet implemented on macOS/Linux (see below).
+    macOS release DMGs are signed and notarized. Fullscreen deferral is currently Windows-only; Linux idle sensing depends on the desktop session (see below).
 3. BlinkBreak starts in your **system tray / menu bar**.
    Right-click it for **Open dashboard**, **Take a break now**, **Pause 15 min**, and **Quit**.
 
@@ -115,17 +115,19 @@ Quit it from the tray first.
 <summary><b>What data does it collect?</b></summary>
 
 None. The only thing it reads from your OS is how many seconds since your last
-keyboard/mouse input (to know whether you're active). Idle sensing is fully supported on
-Windows; it is not implemented on macOS or Linux yet, and the app says so in Settings.
+keyboard/mouse input (to know whether you're active). Idle sensing is supported on Windows
+and macOS. On Linux it uses Mutter or freedesktop ScreenSaver D-Bus where available;
+otherwise the app says so in Settings.
 Settings and daily stats stay on your machine.
 </details>
 
 <details>
 <summary><b>Mac or Linux limitations?</b></summary>
 
-Both install and remind normally, but system-wide idle and fullscreen detection are only
-implemented on Windows so far. On other platforms timers keep running while the app is open.
-Native macOS/Linux sensing is tracked in
+Both install and remind normally. Idle sensing is supported on macOS and on Linux sessions
+that expose the relevant D-Bus service. System-wide fullscreen detection is only implemented
+on Windows; on Linux without a supported idle service, timers count while the app is open.
+Further native sensing improvements are tracked in
 [issue #5](https://github.com/muhammedrinshidvpr-coder/blinkbreak/issues/5).
 </details>
 

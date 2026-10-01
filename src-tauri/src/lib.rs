@@ -1,6 +1,6 @@
 //! BlinkBreak native shell (Tauri 2 + Rust).
 //! CONTRACT:
-//! - GUARANTEES: single instance; tray controls; `get_idle_secs` reports idle seconds where the OS exposes them (Windows today); `get_platform_capabilities` honestly reports idle/fullscreen support; reminder window never steals focus and always closes (native deadline watchdog); `--minimized` login launch stays in tray.
+//! - GUARANTEES: single instance; tray controls; `get_idle_secs` reports idle seconds where a supported OS backend is available; `get_platform_capabilities` honestly reports idle/fullscreen support; reminder window never steals focus and always closes (native deadline watchdog); `--minimized` login launch stays in tray.
 //! - EXPECTS: Windows 10/11 with WebView2; macOS 10.15+; Linux with WebKitGTK system deps (see README).
 //! - DOES NOT: record keys/apps/titles; use webcam; send data anywhere.
 
@@ -17,7 +17,7 @@ use tauri::{
 };
 
 #[tauri::command]
-fn get_idle_secs() -> u64 {
+fn get_idle_secs() -> Option<u64> {
     platform::idle_secs()
 }
 

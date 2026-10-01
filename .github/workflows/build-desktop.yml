@@ -67,6 +67,9 @@ jobs:
       - name: Rust format check
         working-directory: src-tauri
         run: cargo fmt --check
+      - name: Rust platform tests
+        working-directory: src-tauri
+        run: cargo test --locked
       - name: Build Tauri app
         run: npm run tauri build -- --bundles ${{ matrix.bundle }}
       - name: Upload installer artifact

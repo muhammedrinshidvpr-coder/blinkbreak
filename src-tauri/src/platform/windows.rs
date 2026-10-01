@@ -2,7 +2,7 @@
 
 use super::PlatformCapabilities;
 
-pub fn idle_secs() -> u64 {
+pub fn idle_secs() -> Option<u64> {
     use windows::Win32::UI::Input::KeyboardAndMouse::{GetLastInputInfo, LASTINPUTINFO};
     let mut info = LASTINPUTINFO {
         cbSize: std::mem::size_of::<LASTINPUTINFO>() as u32,
@@ -11,10 +11,11 @@ pub fn idle_secs() -> u64 {
     unsafe {
         if GetLastInputInfo(&mut info).as_bool() {
             let now = windows::Win32::System::SystemInformation::GetTickCount();
-            return now.wrapping_sub(info.dwTime) as u64 / 1000;
+            return Some(now.wrapping_sub(info.dwTime) as u64 / 1000);
         }
     }
-    0
+    // Preserve the previous Windows behavior on an OS API failure (no idle).
+    Some(0)
 }
 
 pub fn fullscreen_active() -> bool {

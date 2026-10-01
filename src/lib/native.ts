@@ -33,7 +33,7 @@ export async function getWindowLabel(): Promise<string> {
 export async function getIdleSeconds(): Promise<number | null> {
   if (!isTauriRuntime()) return null;
   const { invoke } = await import('@tauri-apps/api/core');
-  return invoke<number>('get_idle_secs');
+  return invoke<number | null>('get_idle_secs');
 }
 
 export async function showNativeReminder(payload: ReminderPayload): Promise<boolean> {

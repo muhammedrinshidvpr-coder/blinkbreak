@@ -68,7 +68,7 @@ if (deb.length > 0 || appimage.length > 0) {
   lines.push(`### Linux\n\n${[...deb, ...appimage].map((name) => `- **\`${name}\`**`).join('\n')}`);
   if (deb.length > 0) lines.push(`Install the Debian package with your package manager.`);
   if (appimage.length > 0) lines.push(`For AppImage, make it executable before launching (FUSE support may be required by your distribution).`);
-  lines.push(`System-wide idle and fullscreen detection are not implemented on Linux yet; timers count while BlinkBreak is open and Settings explains this limitation.`);
+  lines.push(`Idle sensing uses GNOME/Mutter or freedesktop ScreenSaver D-Bus when available; otherwise timers count while BlinkBreak is open and Settings explains the limitation. Fullscreen detection is not available on Linux yet.`);
 }
 
 console.log(`${section}

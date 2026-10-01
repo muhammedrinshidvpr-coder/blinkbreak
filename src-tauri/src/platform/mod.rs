@@ -1,7 +1,6 @@
 //! OS-specific activity sensing behind one honest interface.
-//! Windows reports real idle/fullscreen state. macOS and Linux currently
-//! report fallback values and say so via `capabilities()` until their native
-//! backends land (see per-OS modules for the planned APIs).
+//! Idle sensing uses Windows input statistics, macOS Quartz session idle time,
+//! or GNOME/freedesktop D-Bus services on Linux. Fullscreen sensing is Windows-only.
 
 use serde::Serialize;
 
@@ -19,7 +18,7 @@ pub struct PlatformCapabilities {
     pub fullscreen_supported: bool,
 }
 
-pub fn idle_secs() -> u64 {
+pub fn idle_secs() -> Option<u64> {
     #[cfg(target_os = "windows")]
     {
         windows::idle_secs()
@@ -34,7 +33,7 @@ pub fn idle_secs() -> u64 {
     }
     #[cfg(not(any(target_os = "windows", target_os = "macos", target_os = "linux")))]
     {
-        0
+        None
     }
 }
 
@@ -93,12 +92,12 @@ mod tests {
             assert!(caps.idle_supported);
             assert!(caps.fullscreen_supported);
         }
-        #[cfg(not(target_os = "windows"))]
+        #[cfg(target_os = "macos")]
         {
-            // Until native backends land, non-Windows reports unsupported
-            // rather than pretending. Update alongside the OS module.
-            assert!(!caps.idle_supported);
+            assert!(caps.idle_supported);
             assert!(!caps.fullscreen_supported);
         }
+        #[cfg(target_os = "linux")]
+        assert!(!caps.fullscreen_supported);
     }
 }

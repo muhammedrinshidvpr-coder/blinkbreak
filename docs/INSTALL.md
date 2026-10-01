@@ -36,8 +36,9 @@ Then follow the installer. It only takes a few seconds.
 signed and notarized by Apple.
 
 **Linux:** install the `.deb` (`sudo apt install ./blinkbreak_x.y.z_amd64.deb`) or make the
-`.AppImage` executable and run it. System-wide idle and fullscreen detection are not
-implemented on Linux yet: timers count while the app is open, and Settings explains this.
+`.AppImage` executable and run it. Idle sensing works when the session provides Mutter or
+freedesktop ScreenSaver D-Bus support; otherwise timers count while the app is open and
+Settings explains this. Fullscreen detection is not available on Linux yet.
 
 ## 3. Use it
 
