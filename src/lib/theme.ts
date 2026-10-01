@@ -11,7 +11,7 @@ export function resolveTheme(setting: ThemeSetting, systemDark: boolean): Resolv
   return setting;
 }
 
-/** Resolves the theme setting (following Windows live when set to System). */
+/** Resolves the theme setting (following the OS live when set to System). */
 export function useResolvedTheme(setting: ThemeSetting): ResolvedTheme {
   const [systemDark, setSystemDark] = useState(() => darkQuery()?.matches ?? false);
   useEffect(() => {

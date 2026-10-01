@@ -39,15 +39,23 @@ const STORY_STEPS: Array<{
   },
 ];
 
-export function HowItWorks() {
+export function HowItWorks({
+  idleSensingSupported = true,
+  fullscreenSensingSupported = true,
+}: {
+  idleSensingSupported?: boolean;
+  fullscreenSensingSupported?: boolean;
+}) {
   return (
     <div className="bb-story" data-testid="how-it-works">
       <section className="bb-panel bb-story-intro" aria-labelledby="story-title">
         <p className="bb-eyebrow">A day with BlinkBreak</p>
         <h2 id="story-title">You keep your focus. Small pauses keep the rhythm.</h2>
         <p className="bb-story-lead">
-          BlinkBreak counts active computer use, not time on the clock. With the recommended settings, five gentle
-          reminders form a path from tiny eye breaks to real time away from the screen.
+          {idleSensingSupported
+            ? 'BlinkBreak counts active computer use, not time on the clock.'
+            : 'On this platform, BlinkBreak counts time while the app is open because system-wide idle sensing is not available yet.'}{' '}
+          With the recommended settings, five gentle reminders form a path from tiny eye breaks to real time away from the screen.
         </p>
         <p className="bb-story-promise">You work. BlinkBreak waits for the right moment.</p>
       </section>
@@ -93,7 +101,15 @@ export function HowItWorks() {
           <article className="bb-story-detail">
             <span className="bb-story-number" aria-hidden="true">03</span>
             <h3>Your context matters</h3>
-            <p>Timers pause when you are idle or asleep. Fullscreen work can defer a reminder, and desktop alerts are designed not to take keyboard focus.</p>
+            <p>
+              {idleSensingSupported
+                ? 'Timers pause when you are idle or asleep.'
+                : 'System-wide idle sensing is not available, so timers cannot pause just because you step away.'}{' '}
+              {fullscreenSensingSupported
+                ? 'Fullscreen work can defer a reminder.'
+                : 'Reminders cannot detect or defer for fullscreen apps on this platform yet.'}{' '}
+              Desktop alerts are designed not to take keyboard focus.
+            </p>
           </article>
         </div>
       </section>
@@ -104,7 +120,10 @@ export function HowItWorks() {
           <h2 id="privacy-title">It notices time, not you.</h2>
         </div>
         <p>
-          BlinkBreak reads only how long your keyboard and mouse have been idle. There is no camera, account, cloud,
+          {idleSensingSupported
+            ? 'BlinkBreak reads only how long your keyboard and mouse have been idle.'
+            : 'BlinkBreak does not read system-wide keyboard or mouse idle time on this platform yet.'}{' '}
+          There is no camera, account, cloud,
           app-name tracking, or key recording. Your settings and daily totals stay on this computer.
         </p>
       </section>

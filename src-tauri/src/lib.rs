@@ -1,8 +1,10 @@
 //! BlinkBreak native shell (Tauri 2 + Rust).
 //! CONTRACT:
-//! - GUARANTEES: single instance; tray controls; `get_idle_secs` reports Windows idle seconds; reminder window never steals focus and always closes (native deadline watchdog); `--minimized` login launch stays in tray.
-//! - EXPECTS: Windows 10/11 with WebView2.
+//! - GUARANTEES: single instance; tray controls; `get_idle_secs` reports idle seconds where a supported OS backend is available; `get_platform_capabilities` honestly reports idle/fullscreen support; reminder window never steals focus and always closes (native deadline watchdog); `--minimized` login launch stays in tray.
+//! - EXPECTS: Windows 10/11 with WebView2; macOS 10.15+; Linux with WebKitGTK system deps (see README).
 //! - DOES NOT: record keys/apps/titles; use webcam; send data anywhere.
+
+mod platform;
 
 use std::{
     sync::atomic::{AtomicU64, Ordering},
@@ -15,26 +17,13 @@ use tauri::{
 };
 
 #[tauri::command]
-fn get_idle_secs() -> u64 {
-    #[cfg(target_os = "windows")]
-    {
-        use windows::Win32::UI::Input::KeyboardAndMouse::{GetLastInputInfo, LASTINPUTINFO};
-        let mut info = LASTINPUTINFO {
-            cbSize: std::mem::size_of::<LASTINPUTINFO>() as u32,
-            dwTime: 0,
-        };
-        unsafe {
-            if GetLastInputInfo(&mut info).as_bool() {
-                let now = windows::Win32::System::SystemInformation::GetTickCount();
-                return now.wrapping_sub(info.dwTime) as u64 / 1000;
-            }
-        }
-        0
-    }
-    #[cfg(not(target_os = "windows"))]
-    {
-        0
-    }
+fn get_idle_secs() -> Option<u64> {
+    platform::idle_secs()
+}
+
+#[tauri::command]
+fn get_platform_capabilities() -> platform::PlatformCapabilities {
+    platform::capabilities()
 }
 
 /// Identifies the reminder currently on screen (0 = none) so a stale deadline never hides a newer one.
@@ -146,52 +135,7 @@ fn show_reminder(
 
 #[tauri::command]
 fn is_fullscreen_active() -> bool {
-    #[cfg(target_os = "windows")]
-    {
-        use windows::Win32::{
-            Foundation::RECT,
-            Graphics::Gdi::{
-                GetMonitorInfoW, MonitorFromWindow, MONITORINFO, MONITOR_DEFAULTTONEAREST,
-            },
-            UI::WindowsAndMessaging::{GetForegroundWindow, GetWindowRect, IsIconic},
-        };
-
-        unsafe {
-            let foreground = GetForegroundWindow();
-            if foreground.0.is_null() || IsIconic(foreground).as_bool() {
-                return false;
-            }
-
-            let mut window_rect = RECT::default();
-            if GetWindowRect(foreground, &mut window_rect).is_err() {
-                return false;
-            }
-
-            let monitor = MonitorFromWindow(foreground, MONITOR_DEFAULTTONEAREST);
-            if monitor.0.is_null() {
-                return false;
-            }
-
-            let mut monitor_info = MONITORINFO {
-                cbSize: std::mem::size_of::<MONITORINFO>() as u32,
-                ..Default::default()
-            };
-            if !GetMonitorInfoW(monitor, &mut monitor_info).as_bool() {
-                return false;
-            }
-
-            const EDGE_TOLERANCE: i32 = 2;
-            let monitor_rect = monitor_info.rcMonitor;
-            window_rect.left <= monitor_rect.left + EDGE_TOLERANCE
-                && window_rect.top <= monitor_rect.top + EDGE_TOLERANCE
-                && window_rect.right >= monitor_rect.right - EDGE_TOLERANCE
-                && window_rect.bottom >= monitor_rect.bottom - EDGE_TOLERANCE
-        }
-    }
-    #[cfg(not(target_os = "windows"))]
-    {
-        false
-    }
+    platform::fullscreen_active()
 }
 
 #[tauri::command]
@@ -273,6 +217,7 @@ pub fn run() {
         })
         .invoke_handler(tauri::generate_handler![
             get_idle_secs,
+            get_platform_capabilities,
             show_reminder,
             hide_reminder,
             is_fullscreen_active

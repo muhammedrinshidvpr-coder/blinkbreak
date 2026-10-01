@@ -10,7 +10,7 @@ import { HowItWorks } from './HowItWorks';
 import { EXIT_MS } from './useSettleOnce';
 import { DEFAULT_SETTINGS, cloneSettings } from '../lib/types';
 
-/** Pretend Windows has "Show animations" turned off. */
+/** Pretend the OS has "Show animations" turned off. */
 function stubSystemReducedMotion(reduce: boolean) {
   vi.stubGlobal('matchMedia', (query: string) => ({
     matches: reduce && query.includes('reduced-motion'),
@@ -105,6 +105,15 @@ describe('HowItWorks', () => {
     expect(screen.getByTestId('stretch-arms')).toBeInTheDocument();
     expect(screen.getByTestId('breath-circle')).toBeInTheDocument();
   });
+
+  it('explains fallback timing and fullscreen limits without claiming active-use sensing', () => {
+    render(<HowItWorks idleSensingSupported={false} fullscreenSensingSupported={false} />);
+
+    expect(screen.getByTestId('how-it-works')).toHaveTextContent('counts time while the app is open');
+    expect(screen.getByTestId('how-it-works')).toHaveTextContent('cannot pause just because you step away');
+    expect(screen.getByTestId('how-it-works')).toHaveTextContent('cannot detect or defer for fullscreen apps');
+    expect(screen.getByTestId('how-it-works')).toHaveTextContent('does not read system-wide keyboard or mouse idle time');
+  });
 });
 
 describe('ReminderCard', () => {
@@ -121,7 +130,7 @@ describe('ReminderCard', () => {
     expect(screen.getByTestId('reminder-snooze')).toHaveAccessibleName('Snooze 10m');
   });
 
-  it('holds the calm still pose when Windows asks for less motion, even if the app setting is off', () => {
+  it('holds the calm still pose when the OS asks for less motion, even if the app setting is off', () => {
     stubSystemReducedMotion(true);
     render(<ReminderCard kind="posture" title="t" body="b" durationSec={20} onAction={vi.fn()} />);
     expect(screen.getByTestId('spine-mid').getAttribute('cx')).toBe('20');
@@ -253,7 +262,7 @@ describe('SettingsPanel', () => {
     expect(onChange.mock.lastCall?.[0].theme).toBe('dark');
   });
 
-  it('asks Windows to change autostart and waits while it does', async () => {
+  it('asks the OS to change autostart and waits while it does', async () => {
     let finish!: () => void;
     const onAutostartChange = vi.fn(() => new Promise<void>((resolve) => { finish = resolve; }));
     render(<SettingsPanel settings={cloneSettings(DEFAULT_SETTINGS)} onChange={vi.fn()} onReset={vi.fn()} autostartAvailable onAutostartChange={onAutostartChange} />);
@@ -266,11 +275,16 @@ describe('SettingsPanel', () => {
     expect(screen.queryByTestId('settings-autostart-error')).not.toBeInTheDocument();
   });
 
-  it('says so when Windows refuses the autostart change', async () => {
+  it('says so when the OS refuses the autostart change', async () => {
     const onAutostartChange = vi.fn(() => Promise.reject(new Error('denied')));
     render(<SettingsPanel settings={cloneSettings(DEFAULT_SETTINGS)} onChange={vi.fn()} onReset={vi.fn()} autostartAvailable onAutostartChange={onAutostartChange} />);
     await act(async () => { fireEvent.click(screen.getByTestId('settings-autostart')); });
-    expect(screen.getByTestId('settings-autostart-error')).toHaveTextContent("Windows didn't accept");
+    expect(screen.getByTestId('settings-autostart-error')).toHaveTextContent("system didn't accept");
+  });
+
+  it('shows the limited-support note when the platform lacks sensing', () => {
+    render(<SettingsPanel settings={cloneSettings(DEFAULT_SETTINGS)} onChange={vi.fn()} onReset={vi.fn()} supportNote="Idle detection isn't available here." />);
+    expect(screen.getByTestId('settings-platform-note')).toHaveTextContent("isn't available");
   });
 
   it('turns off the autostart switch outside the desktop app', () => {

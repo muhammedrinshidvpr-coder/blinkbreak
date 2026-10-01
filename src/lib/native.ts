@@ -33,7 +33,7 @@ export async function getWindowLabel(): Promise<string> {
 export async function getIdleSeconds(): Promise<number | null> {
   if (!isTauriRuntime()) return null;
   const { invoke } = await import('@tauri-apps/api/core');
-  return invoke<number>('get_idle_secs');
+  return invoke<number | null>('get_idle_secs');
 }
 
 export async function showNativeReminder(payload: ReminderPayload): Promise<boolean> {
@@ -56,6 +56,33 @@ export async function isFullscreenActive(): Promise<boolean> {
     return await invoke<boolean>('is_fullscreen_active');
   } catch {
     return false;
+  }
+}
+
+export interface PlatformCapabilities {
+  platform: string;
+  idle_supported: boolean;
+  fullscreen_supported: boolean;
+}
+
+export function platformSupportNote(capabilities: PlatformCapabilities): string | null {
+  const limitations = [
+    !capabilities.idle_supported
+      && `Idle-time detection isn't available on ${capabilities.platform} yet, so timers count while BlinkBreak is open.`,
+    !capabilities.fullscreen_supported
+      && `Fullscreen detection isn't available on ${capabilities.platform} yet, so reminders can't defer during fullscreen sessions.`,
+  ].filter((limitation): limitation is string => Boolean(limitation));
+  return limitations.length > 0 ? limitations.join(' ') : null;
+}
+
+/** Which OS-level signals the native shell actually supports. Null outside Tauri. */
+export async function getPlatformCapabilities(): Promise<PlatformCapabilities | null> {
+  if (!isTauriRuntime()) return null;
+  try {
+    const { invoke } = await import('@tauri-apps/api/core');
+    return await invoke<PlatformCapabilities>('get_platform_capabilities');
+  } catch {
+    return null;
   }
 }
 

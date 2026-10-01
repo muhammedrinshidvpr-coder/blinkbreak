@@ -18,12 +18,15 @@ import { classifyActivity } from './lib/activity';
 import {
   getAutostartEnabled,
   getIdleSeconds,
+  getPlatformCapabilities,
   getWindowLabel,
   isFullscreenActive,
   isTauriRuntime,
   listen,
+  platformSupportNote,
   setAutostartEnabled,
   showNativeReminder,
+  type PlatformCapabilities,
 } from './lib/native';
 import type { CardAction } from './components/ReminderCard';
 import { useApplyTheme, useResolvedTheme } from './lib/theme';
@@ -85,6 +88,7 @@ export default function App() {
   const [activeReminder, setActiveReminder] = useState<{ kind: ReminderKind } | null>(null);
   const [tab, setTab] = useState<Tab>('today');
   const [windowLabel, setWindowLabel] = useState('main');
+  const [platformCaps, setPlatformCaps] = useState<PlatformCapabilities | null>(null);
   const resolvedTheme = useResolvedTheme(settings.theme);
   useApplyTheme(resolvedTheme, windowLabel !== 'reminder');
   const reducedMotion = useReducedMotion(settings.reducedMotion);
@@ -101,6 +105,9 @@ export default function App() {
     // Trust the OS as source of truth for login autostart (user may change it outside the app).
     void getAutostartEnabled().then((enabled) => {
       if (enabled !== null) setSettings((s) => (s.autostart === enabled ? s : { ...s, autostart: enabled }));
+    });
+    void getPlatformCapabilities().then((caps) => {
+      if (caps) setPlatformCaps(caps);
     });
   }, []);
 
@@ -191,8 +198,8 @@ export default function App() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [windowLabel]);
 
-  // Tauri supplies real Windows idle time. Browser preview mode uses one
-  // active second per wall-clock second so the complete flow stays testable.
+  // Tauri supplies real OS idle time where the platform exposes it. Browser preview
+  // mode uses one active second per wall-clock second so the complete flow stays testable.
   useEffect(() => {
     if (windowLabel !== 'main') return;
     let previous: { atMs: number; idleMs: number } | null = null;
@@ -271,7 +278,7 @@ export default function App() {
     await setAutostartEnabled(enabled);
     setSettings((s) => ({ ...s, autostart: enabled }));
   };
-  // Reset restores recommended reminders but keeps the real Windows startup choice.
+  // Reset restores recommended reminders but keeps the real OS startup choice.
   const resetSettings = () => setSettings((s) => ({ ...cloneSettings(DEFAULT_SETTINGS), autostart: s.autostart }));
 
   if (windowLabel === 'reminder') return <NativeReminder />;
@@ -313,13 +320,19 @@ export default function App() {
             activeSec={stats.activeSec}
             status={status}
             stats={stats}
+            idleDetectionSupported={platformCaps?.idle_supported ?? !isTauriRuntime()}
             onBreakNow={handleBreakNow}
             onPause={(min) => setSettings((s) => ({ ...s, pauseUntilMs: Date.now() + min * 60_000 }))}
             onResume={() => setSettings((s) => ({ ...s, pauseUntilMs: null }))}
           />
         )}
         {tab === 'gallery' && <Gallery settings={settings} />}
-        {tab === 'story' && <HowItWorks />}
+        {tab === 'story' && (
+          <HowItWorks
+            idleSensingSupported={platformCaps?.idle_supported ?? !isTauriRuntime()}
+            fullscreenSensingSupported={platformCaps?.fullscreen_supported ?? !isTauriRuntime()}
+          />
+        )}
         {tab === 'settings' && (
           <SettingsPanel
             settings={settings}
@@ -327,6 +340,13 @@ export default function App() {
             onReset={resetSettings}
             autostartAvailable={isTauriRuntime()}
             onAutostartChange={changeAutostart}
+            supportNote={
+              platformCaps
+                ? platformSupportNote(platformCaps)
+                : isTauriRuntime()
+                  ? 'Platform support could not be confirmed. Treat idle and fullscreen detection as unavailable.'
+                  : null
+            }
           />
         )}
       </main>
