@@ -71,7 +71,13 @@ jobs:
         working-directory: src-tauri
         run: cargo test --locked
       - name: Build Tauri app
+        env:
+          # Ad-hoc sign macOS builds ("-"), as unsecreted releases do; ignored elsewhere.
+          APPLE_SIGNING_IDENTITY: ${{ runner.os == 'macOS' && '-' || '' }}
         run: npm run tauri build -- --bundles ${{ matrix.bundle }}
+      - name: Install and launch the built app
+        shell: bash
+        run: bash scripts/smoke-test.sh src-tauri/target/release/bundle
       - name: Upload installer artifact
         uses: actions/upload-artifact@v7
         with:

@@ -6,6 +6,29 @@ All notable changes to BlinkBreak are listed here. The format follows
 
 ## [Unreleased]
 
+## [0.5.0] - 2026-10-10
+
+BlinkBreak now runs on macOS and Linux as well as Windows.
+
+### Added
+- **macOS** downloads for Apple Silicon (`_aarch64.dmg`) and Intel (`_x64.dmg`) Macs.
+- **Linux** downloads as a Debian/Ubuntu package (`.deb`) and a portable `.AppImage`.
+- Active-use timing on macOS, and on Linux desktops that report idle time over D-Bus
+  (GNOME/Mutter or freedesktop ScreenSaver).
+- Settings and the Story tab say plainly what the current computer supports, such as
+  fullscreen deferral being Windows-only for now.
+- Every build is now installed and launched on Windows, macOS, and Linux in CI before it
+  is published.
+
+### Changed
+- **Start with Windows** is now **Start at login**, available on every platform.
+
+### Known limitations
+- The Mac app isn't notarized by Apple yet. The first time you open it, approve it once in
+  **System Settings → Privacy & Security → Open Anyway**.
+- Fullscreen deferral is Windows-only. On Linux desktops without a supported idle service,
+  timers count while the app is open.
+
 ## [0.4.0] - 2026-09-30
 
 A calmer study rhythm: related reminders no longer pile up, and the app now explains
@@ -97,7 +120,8 @@ First public release.
   start with Windows (minimized to tray).
 - Local-only daily stats. No network, accounts, or telemetry.
 
-[Unreleased]: https://github.com/muhammedrinshidvpr-coder/blinkbreak/compare/v0.4.0...HEAD
+[Unreleased]: https://github.com/muhammedrinshidvpr-coder/blinkbreak/compare/v0.5.0...HEAD
+[0.5.0]: https://github.com/muhammedrinshidvpr-coder/blinkbreak/compare/v0.4.0...v0.5.0
 [0.4.0]: https://github.com/muhammedrinshidvpr-coder/blinkbreak/compare/v0.3.0...v0.4.0
 [0.3.0]: https://github.com/muhammedrinshidvpr-coder/blinkbreak/compare/v0.2.0...v0.3.0
 [0.2.0]: https://github.com/muhammedrinshidvpr-coder/blinkbreak/compare/v0.1.0...v0.2.0

@@ -32,8 +32,17 @@ The whole source code is public on GitHub for anyone to check.
 
 Then follow the installer. It only takes a few seconds.
 
-**macOS:** open the `.dmg` and drag BlinkBreak to Applications. Published release DMGs are
-signed and notarized by Apple.
+**macOS:** open the `.dmg` and drag BlinkBreak to Applications. Pick `aarch64` for Apple
+Silicon Macs (M1 or newer) and `x64` for Intel Macs (Apple menu → **About This Mac** tells you which).
+
+The first time you open BlinkBreak, macOS says it can't verify the app:
+
+1. Click **Done**
+2. Open **System Settings → Privacy & Security**
+3. Scroll down and click **Open Anyway** next to BlinkBreak
+
+This happens because the app isn't notarized by Apple yet (that needs a paid developer
+account). You only have to do it once.
 
 **Linux:** install the `.deb` (`sudo apt install ./blinkbreak_x.y.z_amd64.deb`) or make the
 `.AppImage` executable and run it. Idle sensing works when the session provides Mutter or

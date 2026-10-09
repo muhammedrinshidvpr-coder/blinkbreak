@@ -61,8 +61,15 @@ if (win.length > 0) {
   lines.push(`   (the installer isn't paid-code-signed yet).`);
 }
 if (mac.length > 0) {
-  lines.push(`### macOS\n\n${mac.map((name) => `- **\`${name}\`**`).join('\n')}`);
-  lines.push(`These DMGs are signed and notarized by Apple. Open the disk image and drag BlinkBreak to Applications.`);
+  const chip = (name) => (name.includes('_aarch64') ? ' (Apple Silicon: M1 or newer)' : name.includes('_x64') ? ' (Intel)' : '');
+  lines.push(`### macOS\n\n${mac.map((name) => `- **\`${name}\`**${chip(name)}`).join('\n')}`);
+  if (process.env.MACOS_NOTARIZED === 'true') {
+    lines.push(`These DMGs are signed and notarized by Apple. Open the disk image and drag BlinkBreak to Applications.`);
+  } else {
+    lines.push(`Open the disk image and drag BlinkBreak to Applications. The app isn't notarized by Apple yet, so the first time`);
+    lines.push(`you open it macOS says it can't verify BlinkBreak: click **Done**, open **System Settings → Privacy & Security**,`);
+    lines.push(`and click **Open Anyway** next to BlinkBreak. You only need to do this once.`);
+  }
 }
 if (deb.length > 0 || appimage.length > 0) {
   lines.push(`### Linux\n\n${[...deb, ...appimage].map((name) => `- **\`${name}\`**`).join('\n')}`);

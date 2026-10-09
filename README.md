@@ -60,11 +60,11 @@ BlinkBreak follows your system appearance by default. Choose **Settings → Appe
 **New to this?** Follow the [step-by-step install guide](docs/INSTALL.md). It takes about a minute.
 
 1. **[Download the latest installer](https://github.com/muhammedrinshidvpr-coder/blinkbreak/releases/latest)**:
-   Windows (`BlinkBreak_x.y.z_x64-setup.exe`, about 2 MB), macOS (`BlinkBreak_x.y.z_x64.dmg`
-   or Apple Silicon `..._aarch64.dmg`), or Linux (`.deb` or portable `.AppImage`).
+   Windows (`BlinkBreak_x.y.z_x64-setup.exe`, about 2 MB), macOS (Apple Silicon `BlinkBreak_x.y.z_aarch64.dmg`
+   or Intel `..._x64.dmg`), or Linux (`.deb` or portable `.AppImage`).
 2. Run/install it. Windows needs no admin rights and installs just for you; on macOS drag
-    BlinkBreak to Applications; on Linux install the `.deb` or mark the `.AppImage` executable.
-    macOS release DMGs are signed and notarized. Fullscreen deferral is currently Windows-only; Linux idle sensing depends on the desktop session (see below).
+    BlinkBreak to Applications (the first open needs one approval, see the FAQ); on Linux install the `.deb` or mark the `.AppImage` executable.
+    Fullscreen deferral is currently Windows-only; Linux idle sensing depends on the desktop session (see below).
 3. BlinkBreak starts in your **system tray / menu bar**.
    Right-click it for **Open dashboard**, **Take a break now**, **Pause 15 min**, and **Quit**.
 
@@ -78,6 +78,17 @@ SmartScreen doesn't recognise it. Click **More info → Run anyway**. Each
 release lists a SHA-256 checksum you can compare with
 `Get-FileHash .\BlinkBreak_x.y.z_x64-setup.exe`. Or build it yourself from
 source; the code is short enough to read.
+</details>
+
+<details>
+<summary><b>macOS says it can't verify BlinkBreak. How do I open it?</b></summary>
+
+The Mac app isn't notarized by Apple yet (that needs a paid Apple developer
+account). The first time you open it, click **Done**, then open
+**System Settings → Privacy & Security** and click **Open Anyway** next to
+BlinkBreak. macOS remembers this, so you only do it once. Compare the
+download with the release's SHA-256 checksum (`shasum -a 256 BlinkBreak_x.y.z_aarch64.dmg`)
+if you want to be sure it's the real file.
 </details>
 
 <details>
