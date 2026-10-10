@@ -125,7 +125,9 @@ Want breaks to interrupt anyway? Turn on **Settings → Fullscreen → Strict mo
 show even over fullscreen videos, games, and presentations, and you can still close them. This
 works on Windows, macOS, and Linux X11 desktops (such as GNOME on Xorg). Wayland desktops don't
 let apps appear above fullscreen windows, and Settings tells you when that applies. Games that
-take over the screen in exclusive fullscreen can still hide a break.
+take over the screen in exclusive fullscreen can still hide a break. On macOS, BlinkBreak's Dock
+icon steps aside while a strict break is showing, because macOS only lets menu-bar apps cover
+fullscreen apps.
 </details>
 
 <details>
