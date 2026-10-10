@@ -44,7 +44,7 @@ The first time you open BlinkBreak, macOS says it can't verify the app:
 This happens because the app isn't notarized by Apple yet (that needs a paid developer
 account). You only have to do it once.
 
-**Linux:** install the `.deb` (`sudo apt install ./blinkbreak_x.y.z_amd64.deb`) or make the
+**Linux:** install the `.deb` (`sudo apt install ./BlinkBreak_x.y.z_amd64.deb`) or make the
 `.AppImage` executable and run it. Idle sensing works when the session provides Mutter or
 freedesktop ScreenSaver D-Bus support; otherwise timers count while the app is open and
 Settings explains this. Fullscreen detection is not available on Linux yet.

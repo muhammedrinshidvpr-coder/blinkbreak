@@ -54,35 +54,40 @@ const win = byExt('.exe');
 const mac = byExt('.dmg');
 const deb = byExt('.deb');
 const appimage = byExt('.AppImage');
-const lines = [];
+// Each entry is one Markdown block (heading, list, or paragraph), separated by blank lines
+// so a paragraph never merges into the list above it.
+const blocks = [];
+const list = (names, label = () => '') => names.map((name) => `- **\`${name}\`**${label(name)}`).join('\n');
 if (win.length > 0) {
-  lines.push(`### Windows\n\n${win.map((name) => `- **\`${name}\`**`).join('\n')}`);
-  lines.push(`Run the installer. No admin rights needed. If Windows says **"Windows protected your PC"**, click **More info → Run anyway**`);
-  lines.push(`   (the installer isn't paid-code-signed yet).`);
+  blocks.push('### Windows', list(win));
+  blocks.push(`Run the installer. No admin rights needed. If Windows says **"Windows protected your PC"**, click **More info → Run anyway**
+(the installer isn't paid-code-signed yet).`);
 }
 if (mac.length > 0) {
   const chip = (name) => (name.includes('_aarch64') ? ' (Apple Silicon: M1 or newer)' : name.includes('_x64') ? ' (Intel)' : '');
-  lines.push(`### macOS\n\n${mac.map((name) => `- **\`${name}\`**${chip(name)}`).join('\n')}`);
+  blocks.push('### macOS', list(mac, chip));
   if (process.env.MACOS_NOTARIZED === 'true') {
-    lines.push(`These DMGs are signed and notarized by Apple. Open the disk image and drag BlinkBreak to Applications.`);
+    blocks.push(`These DMGs are signed and notarized by Apple. Open the disk image and drag BlinkBreak to Applications.`);
   } else {
-    lines.push(`Open the disk image and drag BlinkBreak to Applications. The app isn't notarized by Apple yet, so the first time`);
-    lines.push(`you open it macOS says it can't verify BlinkBreak: click **Done**, open **System Settings → Privacy & Security**,`);
-    lines.push(`and click **Open Anyway** next to BlinkBreak. You only need to do this once.`);
+    blocks.push(`Open the disk image and drag BlinkBreak to Applications. The app isn't notarized by Apple yet, so the first time
+you open it macOS says it can't verify BlinkBreak: click **Done**, open **System Settings → Privacy & Security**,
+and click **Open Anyway** next to BlinkBreak. You only need to do this once.`);
   }
 }
 if (deb.length > 0 || appimage.length > 0) {
-  lines.push(`### Linux\n\n${[...deb, ...appimage].map((name) => `- **\`${name}\`**`).join('\n')}`);
-  if (deb.length > 0) lines.push(`Install the Debian package with your package manager.`);
-  if (appimage.length > 0) lines.push(`For AppImage, make it executable before launching (FUSE support may be required by your distribution).`);
-  lines.push(`Idle sensing uses GNOME/Mutter or freedesktop ScreenSaver D-Bus when available; otherwise timers count while BlinkBreak is open and Settings explains the limitation. Fullscreen detection is not available on Linux yet.`);
+  const howTo = (name) =>
+    name.endsWith('.deb')
+      ? `: Debian/Ubuntu. Install with \`sudo apt install ./${name}\` (remove later with \`sudo apt remove blink-break\`).`
+      : `: any distribution. Run \`chmod +x ${name}\`, then open it (your distribution may need FUSE for AppImages).`;
+  blocks.push('### Linux', list([...deb, ...appimage], howTo));
+  blocks.push(`Idle sensing uses GNOME/Mutter or freedesktop ScreenSaver D-Bus when available; otherwise timers count while BlinkBreak is open and Settings explains the limitation. Fullscreen detection is not available on Linux yet.`);
 }
 
 console.log(`${section}
 
 ## Install
 
-${lines.join('\n')}
+${blocks.join('\n\n')}
 
 BlinkBreak lives in your system tray / menu bar. Right-click the icon for options.
 

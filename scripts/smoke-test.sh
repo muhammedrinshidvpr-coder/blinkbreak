@@ -115,13 +115,13 @@ smoke_linux() {
   grep -q '\.desktop$' <<<"$installed" || fail "$package has no .desktop launcher"
 
   # Each launch gets its own display and session bus, as a fresh login would.
-  expect_running linux-deb "$(basename "$binary")" dbus-run-session -- xvfb-run -a "$binary"
+  expect_running linux-deb "$(basename "$binary")" xvfb-run -a dbus-run-session -- "$binary"
 
   file "$appimage"
   chmod +x "$appimage"
   # Extract-and-run avoids needing FUSE on the runner; the bundled app is unchanged.
   expect_running linux-appimage "$(basename "$binary")" \
-    dbus-run-session -- xvfb-run -a "$(realpath "$appimage")" --appimage-extract-and-run
+    xvfb-run -a dbus-run-session -- "$(realpath "$appimage")" --appimage-extract-and-run
 
   sudo apt-get remove -y "$package" >/dev/null
 }

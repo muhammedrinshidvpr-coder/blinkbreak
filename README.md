@@ -117,7 +117,7 @@ Yes, by default, quietly in the tray / menu bar. Turn it off in **Settings → S
 <summary><b>How do I uninstall it?</b></summary>
 
 Windows **Settings → Apps → Installed apps → BlinkBreak → Uninstall**.
-On macOS delete BlinkBreak from Applications; on Linux remove the `.deb` (`sudo apt remove blinkbreak`)
+On macOS delete BlinkBreak from Applications; on Linux remove the `.deb` (`sudo apt remove blink-break`)
 or delete the `.AppImage`.
 Quit it from the tray first.
 </details>
