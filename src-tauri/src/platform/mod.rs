@@ -1,6 +1,7 @@
 //! OS-specific activity sensing behind one honest interface.
 //! Idle sensing uses Windows input statistics, macOS Quartz session idle time,
 //! or GNOME/freedesktop D-Bus services on Linux. Fullscreen sensing is Windows-only.
+//! Strict mode's "show above fullscreen apps" works on Windows, macOS, and Linux X11.
 
 use serde::Serialize;
 
@@ -16,6 +17,8 @@ pub struct PlatformCapabilities {
     pub platform: String,
     pub idle_supported: bool,
     pub fullscreen_supported: bool,
+    /// Strict-mode reminders can be shown above fullscreen apps.
+    pub over_fullscreen_supported: bool,
 }
 
 pub fn idle_secs() -> Option<u64> {
@@ -56,6 +59,19 @@ pub fn fullscreen_active() -> bool {
     }
 }
 
+/// Strict mode: let the (hidden) reminder window cover fullscreen apps when it is next shown.
+/// `false` restores the gentle default. Call before showing the window.
+pub fn set_over_fullscreen(window: &tauri::WebviewWindow, enabled: bool) {
+    #[cfg(target_os = "windows")]
+    windows::set_over_fullscreen(window, enabled);
+    #[cfg(target_os = "macos")]
+    macos::set_over_fullscreen(window, enabled);
+    #[cfg(target_os = "linux")]
+    linux::set_over_fullscreen(window, enabled);
+    #[cfg(not(any(target_os = "windows", target_os = "macos", target_os = "linux")))]
+    let _ = (window, enabled);
+}
+
 pub fn capabilities() -> PlatformCapabilities {
     #[cfg(target_os = "windows")]
     {
@@ -75,6 +91,7 @@ pub fn capabilities() -> PlatformCapabilities {
             platform: std::env::consts::OS.to_string(),
             idle_supported: false,
             fullscreen_supported: false,
+            over_fullscreen_supported: false,
         }
     }
 }
@@ -91,11 +108,13 @@ mod tests {
         {
             assert!(caps.idle_supported);
             assert!(caps.fullscreen_supported);
+            assert!(caps.over_fullscreen_supported);
         }
         #[cfg(target_os = "macos")]
         {
             assert!(caps.idle_supported);
             assert!(!caps.fullscreen_supported);
+            assert!(caps.over_fullscreen_supported);
         }
         #[cfg(target_os = "linux")]
         assert!(!caps.fullscreen_supported);

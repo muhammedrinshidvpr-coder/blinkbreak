@@ -2,7 +2,7 @@ import { afterEach, describe, it, expect, vi } from 'vitest';
 import { act, render, screen, fireEvent } from '@testing-library/react';
 import { ReminderCard } from './ReminderCard';
 import { Dashboard, type ScheduleStatus } from './Dashboard';
-import { SettingsPanel } from './SettingsPanel';
+import { SettingsPanel, strictModeNote } from './SettingsPanel';
 import { BreathSymbol, EyeSymbol, HorizonSymbol, SpineSymbol, StretchSymbol, ProgressRing } from './symbols';
 import { Gallery } from './Gallery';
 import { NativeReminder } from './NativeReminder';
@@ -194,7 +194,28 @@ describe('Dashboard', () => {
   });
 });
 
+describe('strict mode note', () => {
+  it('says what strict mode does on this computer', () => {
+    expect(strictModeNote(false, true, true)).toBe('Off: breaks wait until you leave a fullscreen video, game, or presentation.');
+    expect(strictModeNote(false, false, true)).toBe("Off: breaks don't cover fullscreen videos, games, or presentations.");
+    expect(strictModeNote(true, true, true)).toBe('On: breaks show even over fullscreen videos, games, and presentations. You can still close them.');
+    expect(strictModeNote(true, false, false)).toContain("this desktop (Wayland) doesn't let apps appear above fullscreen windows");
+  });
+});
+
 describe('SettingsPanel', () => {
+  it('turns strict mode on from Settings', () => {
+    const onChange = vi.fn();
+    render(<SettingsPanel settings={cloneSettings(DEFAULT_SETTINGS)} onChange={onChange} onReset={() => {}} />);
+
+    const toggle = screen.getByTestId('settings-strict');
+    expect(toggle).not.toBeChecked();
+    expect(screen.getByTestId('settings-strict-note')).toHaveTextContent('Off: breaks wait');
+    fireEvent.click(toggle);
+
+    expect(onChange).toHaveBeenCalledWith(expect.objectContaining({ strictMode: true }));
+  });
+
   it('toggles reminder and edits interval', () => {
     const onChange = vi.fn();
     const s = cloneSettings(DEFAULT_SETTINGS);

@@ -16,6 +16,8 @@ export interface ReminderPayload {
   chime: boolean;
   /** Chime level 0..1. */
   volume: number;
+  /** Strict mode: raise the reminder above fullscreen apps where the OS allows it. */
+  overFullscreen: boolean;
 }
 
 type TauriWindow = Window & { __TAURI_INTERNALS__?: unknown };
@@ -63,6 +65,8 @@ export interface PlatformCapabilities {
   platform: string;
   idle_supported: boolean;
   fullscreen_supported: boolean;
+  /** Strict-mode reminders can appear above fullscreen apps (not on Linux Wayland). */
+  over_fullscreen_supported: boolean;
 }
 
 export function platformSupportNote(capabilities: PlatformCapabilities): string | null {

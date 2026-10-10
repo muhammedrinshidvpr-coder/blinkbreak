@@ -6,6 +6,24 @@ All notable changes to BlinkBreak are listed here. The format follows
 
 ## [Unreleased]
 
+## [0.6.0] - 2026-10-10
+
+Strict mode: breaks that don't wait for fullscreen apps.
+
+### Added
+- **Strict mode** (Settings → Fullscreen, off by default): breaks show even over fullscreen
+  videos, games, and presentations instead of waiting, and you can still close them. Works on
+  Windows, macOS, and Linux X11 desktops such as GNOME on Xorg. Wayland desktops don't let apps
+  cover fullscreen windows, and Settings says so.
+- `blinkbreak --break-now` starts a break in the running app, so you can bind it to a keyboard
+  shortcut.
+- CI now opens a real fullscreen window on Windows, macOS, and Linux and checks that the break
+  appears above it.
+
+### Changed
+- A break you start yourself (**Take a break**, the tray menu, or `--break-now`) shows right
+  away, even over a fullscreen app.
+
 ## [0.5.0] - 2026-10-10
 
 BlinkBreak now runs on macOS and Linux as well as Windows.
@@ -130,7 +148,8 @@ First public release.
   start with Windows (minimized to tray).
 - Local-only daily stats. No network, accounts, or telemetry.
 
-[Unreleased]: https://github.com/muhammedrinshidvpr-coder/blinkbreak/compare/v0.5.0...HEAD
+[Unreleased]: https://github.com/muhammedrinshidvpr-coder/blinkbreak/compare/v0.6.0...HEAD
+[0.6.0]: https://github.com/muhammedrinshidvpr-coder/blinkbreak/compare/v0.5.0...v0.6.0
 [0.5.0]: https://github.com/muhammedrinshidvpr-coder/blinkbreak/compare/v0.4.0...v0.5.0
 [0.4.0]: https://github.com/muhammedrinshidvpr-coder/blinkbreak/compare/v0.3.0...v0.4.0
 [0.3.0]: https://github.com/muhammedrinshidvpr-coder/blinkbreak/compare/v0.2.0...v0.3.0

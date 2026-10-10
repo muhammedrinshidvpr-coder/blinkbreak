@@ -75,9 +75,19 @@ jobs:
           # Ad-hoc sign macOS builds ("-"), as unsecreted releases do; ignored elsewhere.
           APPLE_SIGNING_IDENTITY: ${{ runner.os == 'macOS' && '-' || '' }}
         run: npm run tauri build -- --bundles ${{ matrix.bundle }}
-      - name: Install and launch the built app
+      - name: Install and launch the built app, then check strict mode over a fullscreen window
         shell: bash
+        env:
+          SMOKE_STRICT: '1'
+          SMOKE_SHOTS: ${{ runner.temp }}/strict-mode-screens
         run: bash scripts/smoke-test.sh src-tauri/target/release/bundle
+      - name: Upload strict-mode screenshots
+        if: always()
+        uses: actions/upload-artifact@v7
+        with:
+          name: strict-mode-screens-${{ matrix.os }}
+          path: ${{ runner.temp }}/strict-mode-screens
+          if-no-files-found: warn
       - name: Upload installer artifact
         uses: actions/upload-artifact@v7
         with:

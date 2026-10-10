@@ -23,7 +23,7 @@ describe('native bridge outside Tauri (browser/jsdom)', () => {
 
   it('reminder invoke paths safely report unavailable', async () => {
     await expect(showNativeReminder({
-      kind: 'blink', title: 't', body: 'b', durationSec: 10, snoozeSec: 300, presentation: 'toast', expiryAction: 'done', reducedMotion: false, theme: 'light', chime: false, volume: 0.4,
+      kind: 'blink', title: 't', body: 'b', durationSec: 10, snoozeSec: 300, presentation: 'toast', expiryAction: 'done', reducedMotion: false, theme: 'light', chime: false, volume: 0.4, overFullscreen: false,
     })).resolves.toBe(false);
     await expect(hideNativeReminder()).resolves.toBeUndefined();
     await expect(isFullscreenActive()).resolves.toBe(false);
@@ -45,8 +45,8 @@ describe('native bridge outside Tauri (browser/jsdom)', () => {
   });
 
   it('describes only platform signals that are unsupported', () => {
-    expect(platformSupportNote({ platform: 'windows', idle_supported: true, fullscreen_supported: true })).toBeNull();
-    expect(platformSupportNote({ platform: 'macos', idle_supported: false, fullscreen_supported: true })).toBe("Idle-time detection isn't available on macos yet, so timers count while BlinkBreak is open.");
-    expect(platformSupportNote({ platform: 'linux', idle_supported: false, fullscreen_supported: false })).toBe("Idle-time detection isn't available on linux yet, so timers count while BlinkBreak is open. Fullscreen detection isn't available on linux yet, so reminders can't defer during fullscreen sessions.");
+    expect(platformSupportNote({ platform: 'windows', idle_supported: true, fullscreen_supported: true, over_fullscreen_supported: true })).toBeNull();
+    expect(platformSupportNote({ platform: 'macos', idle_supported: false, fullscreen_supported: true, over_fullscreen_supported: true })).toBe("Idle-time detection isn't available on macos yet, so timers count while BlinkBreak is open.");
+    expect(platformSupportNote({ platform: 'linux', idle_supported: false, fullscreen_supported: false, over_fullscreen_supported: false })).toBe("Idle-time detection isn't available on linux yet, so timers count while BlinkBreak is open. Fullscreen detection isn't available on linux yet, so reminders can't defer during fullscreen sessions.");
   });
 });

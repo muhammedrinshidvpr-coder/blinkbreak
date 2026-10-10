@@ -42,9 +42,12 @@ const STORY_STEPS: Array<{
 export function HowItWorks({
   idleSensingSupported = true,
   fullscreenSensingSupported = true,
+  strictMode = false,
 }: {
   idleSensingSupported?: boolean;
   fullscreenSensingSupported?: boolean;
+  /** Strict mode shows breaks over fullscreen apps instead of deferring them. */
+  strictMode?: boolean;
 }) {
   return (
     <div className="bb-story" data-testid="how-it-works">
@@ -105,9 +108,11 @@ export function HowItWorks({
               {idleSensingSupported
                 ? 'Timers pause when you are idle or asleep.'
                 : 'System-wide idle sensing is not available, so timers cannot pause just because you step away.'}{' '}
-              {fullscreenSensingSupported
-                ? 'Fullscreen work can defer a reminder.'
-                : 'Reminders cannot detect or defer for fullscreen apps on this platform yet.'}{' '}
+              {strictMode
+                ? 'Strict mode is on, so breaks show even over fullscreen apps.'
+                : fullscreenSensingSupported
+                  ? 'Fullscreen work can defer a reminder, unless you turn on strict mode.'
+                  : 'Reminders cannot detect or defer for fullscreen apps on this platform yet.'}{' '}
               Desktop alerts are designed not to take keyboard focus.
             </p>
           </article>

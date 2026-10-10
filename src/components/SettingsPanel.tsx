@@ -78,6 +78,18 @@ function IntervalField({ label, minutes, testId, onCommit }: {
   );
 }
 
+/** What strict mode does on this computer, in one or two plain sentences. */
+export function strictModeNote(strictMode: boolean, fullscreenWaitSupported: boolean, overFullscreenSupported: boolean): string {
+  if (!strictMode) {
+    return fullscreenWaitSupported
+      ? 'Off: breaks wait until you leave a fullscreen video, game, or presentation.'
+      : "Off: breaks don't cover fullscreen videos, games, or presentations.";
+  }
+  return overFullscreenSupported
+    ? 'On: breaks show even over fullscreen videos, games, and presentations. You can still close them.'
+    : "On, but this desktop (Wayland) doesn't let apps appear above fullscreen windows, so breaks may stay behind them.";
+}
+
 export function SettingsPanel({
   settings,
   onChange,
@@ -85,6 +97,8 @@ export function SettingsPanel({
   autostartAvailable = false,
   onAutostartChange,
   supportNote = null,
+  fullscreenWaitSupported = true,
+  overFullscreenSupported = true,
 }: {
   settings: AppSettings;
   onChange: (s: AppSettings) => void;
@@ -95,6 +109,10 @@ export function SettingsPanel({
   onAutostartChange?: (enabled: boolean) => Promise<void>;
   /** Honest note when the current platform lacks idle/fullscreen sensing. */
   supportNote?: string | null;
+  /** The OS can tell when a fullscreen app is open, so gentle breaks wait for it (Windows). */
+  fullscreenWaitSupported?: boolean;
+  /** Strict-mode breaks can appear above fullscreen apps (not on Linux Wayland). */
+  overFullscreenSupported?: boolean;
 }) {
   const [autostartPending, setAutostartPending] = useState(false);
   const [autostartError, setAutostartError] = useState<string | null>(null);
@@ -165,6 +183,20 @@ export function SettingsPanel({
               if (v) playChime(settings.sound.volume); // let people hear what they turned on
             }}
           />
+        </label>
+      </Group>
+
+      <Group
+        title="Fullscreen"
+        note={
+          <p className="bb-note" data-testid="settings-strict-note">
+            {strictModeNote(settings.strictMode, fullscreenWaitSupported, overFullscreenSupported)}
+          </p>
+        }
+      >
+        <label className="bb-item" title="Show breaks even over fullscreen videos, games, and presentations">
+          <span>Strict mode</span>
+          <Switch label="Strict mode" testId="settings-strict" checked={settings.strictMode} onChange={(v) => set((s) => { s.strictMode = v; })} />
         </label>
       </Group>
 
