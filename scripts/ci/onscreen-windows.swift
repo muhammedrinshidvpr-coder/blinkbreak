@@ -1,53 +1,74 @@
-// Usage: onscreen-windows <fullscreen-owner> [<reminder-owner>]
-// Lists the windows macOS has on screen, front to back. Fails unless <fullscreen-owner> has a
-// window covering the whole main display (it really is fullscreen and its Space is showing)
-// and, when <reminder-owner> is given, that app has a full-display window in front of it.
+// Usage: onscreen-windows [--fullscreen <owner>] [--break <owner>]
+// Lists the windows macOS has on screen, front to back, then checks:
+//   --fullscreen <owner>: that app has an on-screen window covering the whole main display
+//                         (it really is fullscreen and its Space is showing);
+//   --break <owner>:      that app has an on-screen full-display window, in front of the
+//                         fullscreen window when both are given.
+// When the break window is missing, it also lists every window of that app, on screen or not.
 import CoreGraphics
 import Foundation
 
-let args = CommandLine.arguments
-guard args.count >= 2 else {
-  FileHandle.standardError.write("usage: onscreen-windows <fullscreen-owner> [<reminder-owner>]\n".data(using: .utf8)!)
-  exit(2)
+var fullscreenOwner: String?
+var breakOwner: String?
+var rest = CommandLine.arguments.dropFirst()
+while let flag = rest.popFirst() {
+  guard let value = rest.popFirst() else { break }
+  switch flag {
+  case "--fullscreen": fullscreenOwner = value.lowercased()
+  case "--break": breakOwner = value.lowercased()
+  default:
+    FileHandle.standardError.write("unknown option \(flag)\n".data(using: .utf8)!)
+    exit(2)
+  }
 }
-let fullscreenOwner = args[1].lowercased()
-let reminderOwner = args.count > 2 ? args[2].lowercased() : nil
 
 let display = CGDisplayBounds(CGMainDisplayID())
-let windows = CGWindowListCopyWindowInfo([.optionOnScreenOnly, .excludeDesktopElements], kCGNullWindowID)
-  as? [[String: Any]] ?? []
 
+func windowList(_ options: CGWindowListOption) -> [[String: Any]] {
+  CGWindowListCopyWindowInfo(options, kCGNullWindowID) as? [[String: Any]] ?? []
+}
+func bounds(_ window: [String: Any]) -> CGRect {
+  (window[kCGWindowBounds as String] as? NSDictionary).flatMap { CGRect(dictionaryRepresentation: $0) } ?? .zero
+}
 func coversDisplay(_ window: [String: Any]) -> Bool {
-  guard let raw = window[kCGWindowBounds as String] as? NSDictionary,
-        let bounds = CGRect(dictionaryRepresentation: raw) else { return false }
-  return bounds.minX <= display.minX && bounds.minY <= display.minY
-    && bounds.maxX >= display.maxX && bounds.maxY >= display.maxY
+  let frame = bounds(window)
+  return frame.minX <= display.minX && frame.minY <= display.minY
+    && frame.maxX >= display.maxX && frame.maxY >= display.maxY
 }
 func owner(_ window: [String: Any]) -> String {
   (window[kCGWindowOwnerName as String] as? String ?? "?").lowercased()
 }
-
-for (index, window) in windows.enumerated() {
+func describe(_ window: [String: Any]) -> String {
   let layer = window[kCGWindowLayer as String] as? Int ?? 0
-  let raw = window[kCGWindowBounds as String] as? NSDictionary
-  let bounds = raw.flatMap { CGRect(dictionaryRepresentation: $0) } ?? .zero
-  print("\(index): owner=\(owner(window)) layer=\(layer) bounds=\(bounds)")
+  let onScreen = window[kCGWindowIsOnscreen as String] as? Bool ?? false
+  let alpha = window[kCGWindowAlpha as String] as? Double ?? 0
+  return "owner=\(owner(window)) layer=\(layer) onscreen=\(onScreen) alpha=\(alpha) bounds=\(bounds(window))"
 }
 
-guard let fullscreenIndex = windows.firstIndex(where: { owner($0) == fullscreenOwner && coversDisplay($0) }) else {
-  print("::error::no fullscreen window from \(fullscreenOwner) is on screen")
-  exit(1)
-}
-print("Fullscreen window from \(fullscreenOwner) is on screen at position \(fullscreenIndex)")
+let onScreen = windowList([.optionOnScreenOnly, .excludeDesktopElements])
+print("On screen, front to back (display \(display)):")
+for (index, window) in onScreen.enumerated() { print("  \(index): \(describe(window))") }
 
-if let reminderOwner {
-  guard let reminderIndex = windows.firstIndex(where: { owner($0) == reminderOwner && coversDisplay($0) }) else {
-    print("::error::no full-display window from \(reminderOwner) is on screen over the fullscreen app")
+var fullscreenIndex: Int?
+if let fullscreenOwner {
+  fullscreenIndex = onScreen.firstIndex { owner($0) == fullscreenOwner && coversDisplay($0) }
+  guard let fullscreenIndex else {
+    print("::error::no fullscreen window from \(fullscreenOwner) is on screen")
     exit(1)
   }
-  guard reminderIndex < fullscreenIndex else {
-    print("::error::\(reminderOwner)'s window is behind the fullscreen window")
+  print("Fullscreen window from \(fullscreenOwner) is on screen at position \(fullscreenIndex)")
+}
+
+if let breakOwner {
+  guard let breakIndex = onScreen.firstIndex(where: { owner($0) == breakOwner && coversDisplay($0) }) else {
+    print("All windows from \(breakOwner):")
+    for window in windowList([.optionAll]) where owner(window) == breakOwner { print("  \(describe(window))") }
+    print("::error::no full-display break window from \(breakOwner) is on screen")
     exit(1)
   }
-  print("Break window from \(reminderOwner) is in front of the fullscreen window")
+  if let fullscreenIndex, breakIndex > fullscreenIndex {
+    print("::error::the break window from \(breakOwner) is behind the fullscreen window")
+    exit(1)
+  }
+  print("Break window from \(breakOwner) is on screen at position \(breakIndex)")
 }

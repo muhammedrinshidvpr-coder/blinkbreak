@@ -68,6 +68,8 @@ strict_enabled() {
 }
 
 # A break asked for with --break-now uses the same "show above fullscreen" path as strict mode.
+# Each check asks the running app for a break twice: on the plain desktop (proving --break-now
+# reaches it), then over a fullscreen window. Look-away breaks last 20 s, hence the waits.
 strict_check_macos() {
   local binary=$1 executable=$2 fullscreen="$work/fullscreen-window" checker="$work/onscreen-windows"
   swiftc -O -o "$fullscreen" "$ci_dir/fullscreen-window.swift"
@@ -76,23 +78,33 @@ strict_check_macos() {
   "$binary" >"$work/strict-app.log" 2>&1 &
   local app_pid=$!
   sleep 10
-  "$fullscreen" &
-  local fullscreen_pid=$!
-  sleep 6
-  screencapture -x "$shots/macos-1-fullscreen.png" || true
-  "$checker" fullscreen-window
+  local result=0
 
   "$binary" --break-now
-  sleep 5
-  screencapture -x "$shots/macos-2-break-over-fullscreen.png" || true
-  local result=0
-  "$checker" fullscreen-window "$executable" || result=$?
+  sleep 4
+  screencapture -x "$shots/macos-1-break-on-desktop.png" || true
+  "$checker" --break "$executable" || result=$?
+  sleep 25
 
-  kill "$fullscreen_pid" 2>/dev/null || true
+  if [ "$result" -eq 0 ]; then
+    "$fullscreen" &
+    local fullscreen_pid=$!
+    sleep 6
+    screencapture -x "$shots/macos-2-fullscreen.png" || true
+    "$checker" --fullscreen fullscreen-window || result=$?
+
+    "$binary" --break-now
+    sleep 4
+    screencapture -x "$shots/macos-3-break-over-fullscreen.png" || true
+    [ "$result" -ne 0 ] || "$checker" --fullscreen fullscreen-window --break "$executable" || result=$?
+    kill "$fullscreen_pid" 2>/dev/null || true
+  fi
+
   stop_app "$app_pid" "$executable"
+  echo "--- BlinkBreak output ---"
   cat "$work/strict-app.log"
-  [ "$result" -eq 0 ] || fail "the break did not appear above the fullscreen window"
-  echo "OK: the break appeared above a macOS fullscreen window"
+  [ "$result" -eq 0 ] || fail "strict-mode break check failed on macOS (see above)"
+  echo "OK: the break appeared on the desktop and above a macOS fullscreen window"
 }
 
 strict_check_linux() {
@@ -103,31 +115,40 @@ strict_check_linux() {
 }
 
 strict_check_windows() {
-  local exe=$1 process
+  local exe=$1 process shots_win top_window
   process=$(basename "$exe")
-  local shots_win
   shots_win=$(cygpath -w "$shots")
+  top_window=$(cygpath -w "$ci_dir/top-window.ps1")
 
   "$exe" >"$work/strict-app.log" 2>&1 &
   local app_pid=$!
   sleep 10
-  pwsh -NoProfile -File "$(cygpath -w "$ci_dir/fullscreen-window.ps1")" &
-  local fullscreen_pid=$!
-  sleep 6
-  pwsh -NoProfile -File "$(cygpath -w "$ci_dir/top-window.ps1")" \
-    -ExpectTitle 'Fullscreen test' -Screenshot "$shots_win\\windows-1-fullscreen.png"
+  local result=0
 
   "$exe" --break-now
-  sleep 5
-  local result=0
-  pwsh -NoProfile -File "$(cygpath -w "$ci_dir/top-window.ps1")" \
-    -ExpectTitle 'BlinkBreak reminder' -Screenshot "$shots_win\\windows-2-break-over-fullscreen.png" || result=$?
+  sleep 4
+  pwsh -NoProfile -File "$top_window" \
+    -ExpectTitle 'BlinkBreak reminder' -Screenshot "$shots_win\\windows-1-break-on-desktop.png" || result=$?
+  sleep 25
 
-  taskkill /F /FI "WINDOWTITLE eq Fullscreen test" >/dev/null 2>&1 || true
-  kill "$fullscreen_pid" 2>/dev/null || true
+  if [ "$result" -eq 0 ]; then
+    pwsh -NoProfile -File "$(cygpath -w "$ci_dir/fullscreen-window.ps1")" &
+    local fullscreen_pid=$!
+    sleep 8
+    pwsh -NoProfile -File "$top_window" \
+      -ExpectTitle 'Fullscreen test' -Screenshot "$shots_win\\windows-2-fullscreen.png" || result=$?
+
+    "$exe" --break-now
+    sleep 4
+    [ "$result" -ne 0 ] || pwsh -NoProfile -File "$top_window" \
+      -ExpectTitle 'BlinkBreak reminder' -Screenshot "$shots_win\\windows-3-break-over-fullscreen.png" || result=$?
+    taskkill /F /FI "WINDOWTITLE eq Fullscreen test" >/dev/null 2>&1 || true
+    kill "$fullscreen_pid" 2>/dev/null || true
+  fi
+
   stop_app "$app_pid" "$process"
-  [ "$result" -eq 0 ] || fail "the break did not appear above the fullscreen window"
-  echo "OK: the break appeared above an always-on-top fullscreen window"
+  [ "$result" -eq 0 ] || fail "strict-mode break check failed on Windows (see above)"
+  echo "OK: the break appeared on the desktop and above an always-on-top fullscreen window"
 }
 
 smoke_macos() {

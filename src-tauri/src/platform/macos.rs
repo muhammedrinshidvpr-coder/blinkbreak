@@ -2,8 +2,11 @@
 //! the last input event; it does not install an event tap or inspect input.
 //! Fullscreen detection remains unavailable without Accessibility access.
 
+use std::sync::atomic::{AtomicBool, Ordering};
+
 use super::PlatformCapabilities;
 use objc2::{msg_send, runtime::AnyObject};
+use tauri::{ActivationPolicy, Manager};
 
 const COMBINED_SESSION_STATE: u32 = 0;
 const ANY_INPUT_EVENT_TYPE: u32 = u32::MAX;
@@ -16,6 +19,9 @@ const OVER_FULLSCREEN_BEHAVIOR: usize = CAN_JOIN_ALL_SPACES | FULL_SCREEN_AUXILI
 const FLOATING_WINDOW_LEVEL: isize = 3;
 /// NSStatusWindowLevel: above fullscreen apps and the menu bar.
 const STATUS_WINDOW_LEVEL: isize = 25;
+
+/// True while a strict reminder runs BlinkBreak as an accessory (menu-bar) app.
+static ACCESSORY_FOR_REMINDER: AtomicBool = AtomicBool::new(false);
 
 #[link(name = "CoreGraphics", kind = "framework")]
 unsafe extern "C" {
@@ -41,7 +47,18 @@ pub fn fullscreen_active() -> bool {
 /// fullscreen Space, above its windows. Must run before the window is shown, or macOS keeps
 /// it in the Space it was shown in. `false` restores the gentle default, where a reminder
 /// stays on the desktop Space and doesn't cover a fullscreen app.
+///
+/// macOS only lets accessory (menu-bar) apps put windows into another app's fullscreen Space,
+/// so a strict reminder briefly runs BlinkBreak as one; `reminder_hidden` switches it back.
 pub fn set_over_fullscreen(window: &tauri::WebviewWindow, enabled: bool) {
+    if enabled {
+        ACCESSORY_FOR_REMINDER.store(true, Ordering::SeqCst);
+        let _ = window
+            .app_handle()
+            .set_activation_policy(ActivationPolicy::Accessory);
+    } else {
+        reminder_hidden(window.app_handle());
+    }
     let window_for_main = window.clone();
     let _ = window.run_on_main_thread(move || {
         let Ok(ns_window) = window_for_main.ns_window() else {
@@ -59,6 +76,13 @@ pub fn set_over_fullscreen(window: &tauri::WebviewWindow, enabled: bool) {
             let _: () = msg_send![ns_window, setLevel: level];
         }
     });
+}
+
+/// Restores the Dock icon and app menu once a strict reminder is gone.
+pub fn reminder_hidden(app: &tauri::AppHandle) {
+    if ACCESSORY_FOR_REMINDER.swap(false, Ordering::SeqCst) {
+        let _ = app.set_activation_policy(ActivationPolicy::Regular);
+    }
 }
 
 pub fn capabilities() -> PlatformCapabilities {

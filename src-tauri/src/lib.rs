@@ -132,6 +132,7 @@ fn show_reminder(
         if let Some(win) = app_for_deadline.get_webview_window("reminder") {
             let _ = win.hide();
         }
+        platform::reminder_hidden(&app_for_deadline);
         let _ = app_for_deadline.emit(
             "blinkbreak:reminder-action",
             serde_json::json!({ "kind": kind, "action": expiry_action }),
@@ -154,6 +155,7 @@ fn hide_reminder(
     if let Some(win) = app.get_webview_window("reminder") {
         win.hide().map_err(|e| e.to_string())?;
     }
+    platform::reminder_hidden(&app);
     Ok(())
 }
 

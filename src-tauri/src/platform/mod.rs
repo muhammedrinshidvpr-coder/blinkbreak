@@ -72,6 +72,14 @@ pub fn set_over_fullscreen(window: &tauri::WebviewWindow, enabled: bool) {
     let _ = (window, enabled);
 }
 
+/// Undoes app-wide changes a strict reminder made (macOS); call after hiding the reminder.
+pub fn reminder_hidden(app: &tauri::AppHandle) {
+    #[cfg(target_os = "macos")]
+    macos::reminder_hidden(app);
+    #[cfg(not(target_os = "macos"))]
+    let _ = app;
+}
+
 pub fn capabilities() -> PlatformCapabilities {
     #[cfg(target_os = "windows")]
     {
