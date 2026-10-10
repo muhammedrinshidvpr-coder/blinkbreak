@@ -68,6 +68,14 @@ function freshStats(): DayStats {
 }
 
 export default function App() {
+  // Read before the save effect below stores settings for the first time.
+  const [firstLaunch] = useState(() => {
+    try {
+      return localStorage.getItem(SETTINGS_KEY) === null;
+    } catch {
+      return false;
+    }
+  });
   const [settings, setSettings] = useState<AppSettings>(() => {
     try {
       const raw = localStorage.getItem(SETTINGS_KEY);
@@ -103,8 +111,14 @@ export default function App() {
   useEffect(() => {
     void getWindowLabel().then(setWindowLabel);
     // Trust the OS as source of truth for login autostart (user may change it outside the app).
-    void getAutostartEnabled().then((enabled) => {
-      if (enabled !== null) setSettings((s) => (s.autostart === enabled ? s : { ...s, autostart: enabled }));
+    // A fresh install applies the "on" default once; after that, turning it off sticks.
+    // Dev builds skip it so `tauri dev` never registers a debug binary to run at login.
+    void getAutostartEnabled().then(async (osEnabled) => {
+      if (osEnabled === null) return;
+      const enabled = !osEnabled && firstLaunch && DEFAULT_SETTINGS.autostart && !import.meta.env.DEV
+        ? await setAutostartEnabled(true).catch(() => false)
+        : osEnabled;
+      setSettings((s) => (s.autostart === enabled ? s : { ...s, autostart: enabled }));
     });
     void getPlatformCapabilities().then((caps) => {
       if (caps) setPlatformCaps(caps);

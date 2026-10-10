@@ -2,7 +2,8 @@
 // Prints release notes (the CHANGELOG.md section for <version> plus install help and
 // checksums) and writes SHA256SUMS.txt next to the installers.
 // The installer dir is searched recursively for Windows (.exe), macOS (.dmg),
-// and Linux (.deb, .AppImage) artifacts.
+// and Linux (.deb, .AppImage) artifacts; the release workflow points it at the plain-named
+// copies from release-assets.mjs.
 import { createHash } from 'node:crypto';
 import { readdirSync, readFileSync, statSync, writeFileSync } from 'node:fs';
 import { basename, join } from 'node:path';
@@ -64,7 +65,7 @@ if (win.length > 0) {
 (the installer isn't paid-code-signed yet).`);
 }
 if (mac.length > 0) {
-  const chip = (name) => (name.includes('_aarch64') ? ' (Apple Silicon: M1 or newer)' : name.includes('_x64') ? ' (Intel)' : '');
+  const chip = (name) => (name.includes('AppleSilicon') ? ': Macs with an M1 chip or newer' : name.includes('Intel') ? ': Macs with an Intel processor' : '');
   blocks.push('### macOS', list(mac, chip));
   if (process.env.MACOS_NOTARIZED === 'true') {
     blocks.push(`These DMGs are signed and notarized by Apple. Open the disk image and drag BlinkBreak to Applications.`);
@@ -89,7 +90,8 @@ console.log(`${section}
 
 ${blocks.join('\n\n')}
 
-BlinkBreak lives in your system tray / menu bar. Right-click the icon for options.
+BlinkBreak lives in your system tray / menu bar. Click the icon for options.
+New to this? Follow the [step-by-step install guide](https://github.com/muhammedrinshidvpr-coder/blinkbreak/blob/master/docs/INSTALL.md).
 
 ## Verify the download (optional)
 

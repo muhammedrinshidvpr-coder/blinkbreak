@@ -150,15 +150,20 @@ fn hide_reminder(
     Ok(())
 }
 
+/// Shows and focuses the dashboard window (it hides instead of closing).
+fn show_dashboard(app: &tauri::AppHandle) {
+    if let Some(w) = app.get_webview_window("main") {
+        let _ = w.show();
+        let _ = w.set_focus();
+    }
+}
+
 #[cfg_attr(mobile, tauri::mobile_entry_point)]
 pub fn run() {
     tauri::Builder::default()
         .manage(ReminderSlot::default())
         .plugin(tauri_plugin_single_instance::init(|app, _args, _cwd| {
-            if let Some(w) = app.get_webview_window("main") {
-                let _ = w.show();
-                let _ = w.set_focus();
-            }
+            show_dashboard(app);
         }))
         .setup(|app| {
             if let Some(main_window) = app.get_webview_window("main") {
@@ -193,12 +198,7 @@ pub fn run() {
                 .tooltip("BlinkBreak — gentle health reminders")
                 .on_menu_event(|app, e| match e.id.as_ref() {
                     "quit" => app.exit(0),
-                    "open" => {
-                        if let Some(w) = app.get_webview_window("main") {
-                            let _ = w.show();
-                            let _ = w.set_focus();
-                        }
-                    }
+                    "open" => show_dashboard(app),
                     "break-now" => {
                         // Main window JS runs even while hidden; it shows the reminder card.
                         if let Some(w) = app.get_webview_window("main") {
@@ -222,6 +222,13 @@ pub fn run() {
             hide_reminder,
             is_fullscreen_active
         ])
-        .run(tauri::generate_context!())
-        .expect("BlinkBreak failed to start");
+        .build(tauri::generate_context!())
+        .expect("BlinkBreak failed to start")
+        .run(|_app, _event| {
+            // macOS: clicking the Dock icon (or opening the app again) brings the dashboard back.
+            #[cfg(target_os = "macos")]
+            if let tauri::RunEvent::Reopen { .. } = _event {
+                show_dashboard(_app);
+            }
+        });
 }

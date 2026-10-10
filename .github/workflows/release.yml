@@ -141,19 +141,18 @@ jobs:
         with:
           path: dist-bundles
           merge-multiple: true
+      - name: Give installers plain download names
+        shell: bash
+        run: node scripts/release-assets.mjs "${GITHUB_REF_NAME#v}" dist-bundles release
       - name: Checksum + release notes from CHANGELOG.md
         shell: bash
         env:
           # Matches the build job: the DMGs are notarized only when the Apple secrets exist.
           MACOS_NOTARIZED: ${{ secrets.APPLE_API_KEY_BASE64 != '' }}
-        run: node scripts/release-notes.mjs "${GITHUB_REF_NAME#v}" dist-bundles > notes.md
+        run: node scripts/release-notes.mjs "${GITHUB_REF_NAME#v}" release > notes.md
       - name: Publish GitHub Release
         uses: softprops/action-gh-release@v3
         with:
+          name: BlinkBreak ${{ github.ref_name }}
           body_path: notes.md
-          files: |
-            dist-bundles/**/*.exe
-            dist-bundles/**/*.dmg
-            dist-bundles/**/*.deb
-            dist-bundles/**/*.AppImage
-            dist-bundles/SHA256SUMS.txt
+          files: release/*

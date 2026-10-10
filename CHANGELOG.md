@@ -11,8 +11,11 @@ All notable changes to BlinkBreak are listed here. The format follows
 BlinkBreak now runs on macOS and Linux as well as Windows.
 
 ### Added
-- **macOS** downloads for Apple Silicon (`_aarch64.dmg`) and Intel (`_x64.dmg`) Macs.
-- **Linux** downloads as a Debian/Ubuntu package (`.deb`) and a portable `.AppImage`.
+- **macOS** downloads for Apple Silicon (`BlinkBreak-Mac-AppleSilicon.dmg`) and Intel
+  (`BlinkBreak-Mac-Intel.dmg`) Macs.
+- **Linux** downloads as a Debian/Ubuntu package (`BlinkBreak-Linux.deb`) and a portable
+  `BlinkBreak-Linux.AppImage`.
+- The README and install guide link straight to the newest download for each computer.
 - Active-use timing on macOS, and on Linux desktops that report idle time over D-Bus
   (GNOME/Mutter or freedesktop ScreenSaver).
 - Settings and the Story tab say plainly what the current computer supports, such as
@@ -21,7 +24,14 @@ BlinkBreak now runs on macOS and Linux as well as Windows.
   is published.
 
 ### Changed
+- Downloads have plain names that say which computer they are for, such as
+  `BlinkBreak-Windows-Setup.exe`, instead of version and CPU codes.
 - **Start with Windows** is now **Start at login**, available on every platform.
+
+### Fixed
+- A new install now really starts at login, as the setting always said. Before, it stayed off
+  until you switched it on yourself. Existing installs keep whatever you chose.
+- On macOS, clicking BlinkBreak in the Dock brings the dashboard back after you close it.
 
 ### Known limitations
 - The Mac app isn't notarized by Apple yet. The first time you open it, approve it once in

@@ -11,11 +11,11 @@ afterEach(() => {
 });
 
 const artifacts = [
-  ['windows', 'BlinkBreak_0.4.0_x64-setup.exe'],
-  ['mac-arm', 'BlinkBreak_0.4.0_aarch64.dmg'],
-  ['mac-intel', 'BlinkBreak_0.4.0_x64.dmg'],
-  ['linux/deb', 'BlinkBreak_0.4.0_amd64.deb'],
-  ['linux/appimage', 'BlinkBreak_0.4.0_amd64.AppImage'],
+  ['', 'BlinkBreak-Windows-Setup.exe'],
+  ['', 'BlinkBreak-Mac-AppleSilicon.dmg'],
+  ['', 'BlinkBreak-Mac-Intel.dmg'],
+  ['linux', 'BlinkBreak-Linux.deb'],
+  ['linux', 'BlinkBreak-Linux.AppImage'],
 ] as const;
 
 function releaseNotes(macosNotarized: string | undefined) {
@@ -44,11 +44,11 @@ describe('release notes', () => {
 
     expect(run.status, run.stderr).toBe(0);
     for (const [, filename] of artifacts) expect(run.stdout).toContain(filename);
-    expect(run.stdout).toContain('`BlinkBreak_0.4.0_aarch64.dmg`** (Apple Silicon: M1 or newer)');
-    expect(run.stdout).toContain('`BlinkBreak_0.4.0_x64.dmg`** (Intel)');
+    expect(run.stdout).toContain('`BlinkBreak-Mac-AppleSilicon.dmg`**: Macs with an M1 chip or newer');
+    expect(run.stdout).toContain('`BlinkBreak-Mac-Intel.dmg`**: Macs with an Intel processor');
     expect(run.stdout).toContain('Get-FileHash .\\<downloaded-file>');
-    expect(run.stdout).toContain('`sudo apt install ./BlinkBreak_0.4.0_amd64.deb`');
-    expect(run.stdout).toContain('`chmod +x BlinkBreak_0.4.0_amd64.AppImage`');
+    expect(run.stdout).toContain('`sudo apt install ./BlinkBreak-Linux.deb`');
+    expect(run.stdout).toContain('`chmod +x BlinkBreak-Linux.AppImage`');
     // A paragraph directly under a list renders inside the last bullet, so blocks need blank lines.
     const install = run.stdout.slice(run.stdout.indexOf('## Install'), run.stdout.indexOf('## Verify'));
     expect(install).not.toMatch(/^- .*\n[^-\n]/m);

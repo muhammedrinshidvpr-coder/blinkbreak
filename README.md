@@ -15,6 +15,22 @@ A small, private desktop app for long screen sessions. Windows, macOS, and Linux
 
 </div>
 
+## Download
+
+Free, about a minute to install. Click the file for your computer:
+
+| Your computer | Download |
+|---|---|
+| **Windows** 10 / 11 | [**BlinkBreak-Windows-Setup.exe**](https://github.com/muhammedrinshidvpr-coder/blinkbreak/releases/latest/download/BlinkBreak-Windows-Setup.exe) |
+| **Mac** with M1, M2, M3, M4… chip | [**BlinkBreak-Mac-AppleSilicon.dmg**](https://github.com/muhammedrinshidvpr-coder/blinkbreak/releases/latest/download/BlinkBreak-Mac-AppleSilicon.dmg) |
+| **Mac** with Intel processor | [**BlinkBreak-Mac-Intel.dmg**](https://github.com/muhammedrinshidvpr-coder/blinkbreak/releases/latest/download/BlinkBreak-Mac-Intel.dmg) |
+| **Linux**: Ubuntu / Debian | [**BlinkBreak-Linux.deb**](https://github.com/muhammedrinshidvpr-coder/blinkbreak/releases/latest/download/BlinkBreak-Linux.deb) |
+| **Linux**: any other distribution | [**BlinkBreak-Linux.AppImage**](https://github.com/muhammedrinshidvpr-coder/blinkbreak/releases/latest/download/BlinkBreak-Linux.AppImage) |
+
+Not sure which Mac? **Apple menu → About This Mac**: "Chip: Apple M…" means Apple Silicon.
+Then follow the **[step-by-step install guide](docs/INSTALL.md)**. All versions and checksums are on the
+[releases page](https://github.com/muhammedrinshidvpr-coder/blinkbreak/releases).
+
 ## Why BlinkBreak?
 
 - **Private.** No internet, no account, no tracking. Nothing leaves your computer.
@@ -59,14 +75,17 @@ BlinkBreak follows your system appearance by default. Choose **Settings → Appe
 
 **New to this?** Follow the [step-by-step install guide](docs/INSTALL.md). It takes about a minute.
 
-1. **[Download the latest installer](https://github.com/muhammedrinshidvpr-coder/blinkbreak/releases/latest)**:
-   Windows (`BlinkBreak_x.y.z_x64-setup.exe`, about 2 MB), macOS (Apple Silicon `BlinkBreak_x.y.z_aarch64.dmg`
-   or Intel `..._x64.dmg`), or Linux (`.deb` or portable `.AppImage`).
-2. Run/install it. Windows needs no admin rights and installs just for you; on macOS drag
-    BlinkBreak to Applications (the first open needs one approval, see the FAQ); on Linux install the `.deb` or mark the `.AppImage` executable.
-    Fullscreen deferral is currently Windows-only; Linux idle sensing depends on the desktop session (see below).
-3. BlinkBreak starts in your **system tray / menu bar**.
-   Right-click it for **Open dashboard**, **Take a break now**, **Pause 15 min**, and **Quit**.
+1. **[Download](#download)** the file for your computer.
+2. Install it:
+   - **Windows:** open the `.exe`. No admin rights needed; it installs just for you.
+   - **Mac:** open the `.dmg` and drag BlinkBreak to Applications. The first open needs one
+     approval in **System Settings → Privacy & Security → Open Anyway** (see the FAQ).
+   - **Linux:** `sudo apt install ./BlinkBreak-Linux.deb`, or `chmod +x BlinkBreak-Linux.AppImage` and run it.
+3. BlinkBreak keeps running in your **system tray / menu bar**.
+   Click the icon for **Open dashboard**, **Take a break now**, **Pause 15 min**, and **Quit BlinkBreak**.
+4. It starts by itself when you sign in. Change that in **Settings → Start at login**.
+
+Fullscreen deferral is currently Windows-only; Linux idle sensing depends on the desktop session (see the FAQ).
 
 ## FAQ
 
@@ -76,7 +95,7 @@ BlinkBreak follows your system appearance by default. Choose **Settings → Appe
 The installer isn't code-signed yet (signing certificates cost money), so
 SmartScreen doesn't recognise it. Click **More info → Run anyway**. Each
 release lists a SHA-256 checksum you can compare with
-`Get-FileHash .\BlinkBreak_x.y.z_x64-setup.exe`. Or build it yourself from
+`Get-FileHash .\BlinkBreak-Windows-Setup.exe`. Or build it yourself from
 source; the code is short enough to read.
 </details>
 
@@ -87,8 +106,11 @@ The Mac app isn't notarized by Apple yet (that needs a paid Apple developer
 account). The first time you open it, click **Done**, then open
 **System Settings → Privacy & Security** and click **Open Anyway** next to
 BlinkBreak. macOS remembers this, so you only do it once. Compare the
-download with the release's SHA-256 checksum (`shasum -a 256 BlinkBreak_x.y.z_aarch64.dmg`)
+download with the release's SHA-256 checksum (`shasum -a 256 BlinkBreak-Mac-AppleSilicon.dmg`)
 if you want to be sure it's the real file.
+
+If macOS says the app **"is damaged and can't be opened"**, run
+`xattr -dr com.apple.quarantine /Applications/BlinkBreak.app` in Terminal once.
 </details>
 
 <details>
@@ -110,16 +132,17 @@ appears, set quiet hours, and pick light or dark.
 <details>
 <summary><b>Does it start at login?</b></summary>
 
-Yes, by default, quietly in the tray / menu bar. Turn it off in **Settings → Start at login**.
+Yes. A new install starts at login by default, quietly in the tray / menu bar.
+Turn it off or on any time in **Settings → Start at login**.
 </details>
 
 <details>
 <summary><b>How do I uninstall it?</b></summary>
 
+First turn off **Settings → Start at login** and quit BlinkBreak from the tray / menu bar icon. Then:
 Windows **Settings → Apps → Installed apps → BlinkBreak → Uninstall**.
-On macOS delete BlinkBreak from Applications; on Linux remove the `.deb` (`sudo apt remove blink-break`)
+On macOS drag BlinkBreak from Applications to the Trash; on Linux remove the `.deb` (`sudo apt remove blink-break`)
 or delete the `.AppImage`.
-Quit it from the tray first.
 </details>
 
 <details>
