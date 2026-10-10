@@ -24,6 +24,14 @@ Strict mode: breaks that don't wait for fullscreen apps.
 - A break you start yourself (**Take a break**, the tray menu, or `--break-now`) shows right
   away, even over a fullscreen app.
 
+### Fixed
+- On macOS, breaks now gently dim what's behind them, as on Windows and Linux. Before, the
+  backdrop was solid, and the blink reminder showed as a white box instead of a small pill.
+
+### Security
+- Updated a build-time dependency (`source-map-js`) with a denial-of-service advisory. It is not
+  part of the installed app.
+
 ## [0.5.0] - 2026-10-10
 
 BlinkBreak now runs on macOS and Linux as well as Windows.
