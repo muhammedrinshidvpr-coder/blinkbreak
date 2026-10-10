@@ -65,8 +65,6 @@ fn show_reminder(
     let Some(win) = app.get_webview_window("reminder") else {
         return Err("no reminder window".into());
     };
-    // Before showing: macOS and Linux decide which Space/layer a window joins when it appears.
-    platform::set_over_fullscreen(&win, over_fullscreen);
 
     let cursor_monitor = app
         .cursor_position()
@@ -114,6 +112,8 @@ fn show_reminder(
         }),
     )
     .map_err(|e| e.to_string())?;
+    // Right before showing: macOS and Linux decide which Space/layer a window joins when it appears.
+    platform::set_over_fullscreen(&win, over_fullscreen);
     // `focusable: false` in tauri.conf.json keeps this from stealing typing focus on every show.
     win.show().map_err(|e| e.to_string())?;
 

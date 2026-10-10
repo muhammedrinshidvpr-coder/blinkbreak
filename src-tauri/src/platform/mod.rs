@@ -60,7 +60,7 @@ pub fn fullscreen_active() -> bool {
 }
 
 /// Strict mode: let the (hidden) reminder window cover fullscreen apps when it is next shown.
-/// `false` restores the gentle default. Call before showing the window.
+/// `false` restores the gentle default. Call right before showing the window.
 pub fn set_over_fullscreen(window: &tauri::WebviewWindow, enabled: bool) {
     #[cfg(target_os = "windows")]
     windows::set_over_fullscreen(window, enabled);
