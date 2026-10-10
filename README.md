@@ -35,6 +35,7 @@ Then follow the **[step-by-step install guide](docs/INSTALL.md)**. All versions 
 
 - **Private.** No internet, no account, no tracking. Nothing leaves your computer.
 - **Quiet.** Reminders are designed not to take keyboard focus. Fullscreen deferral is currently supported on Windows.
+- **Strict when you want it.** Turn on **Strict mode** and breaks show even over fullscreen videos, games, and presentations.
 - **Brief.** Every reminder leaves on its own when its time is up.
 
 ## Reminders
@@ -116,9 +117,28 @@ If macOS says the app **"is damaged and can't be opened"**, run
 <details>
 <summary><b>Will it interrupt my game, movie, or presentation?</b></summary>
 
-On Windows, if a fullscreen app is in front, reminders wait until you leave
-fullscreen. macOS/Linux do not have system-wide fullscreen detection yet.
+Not by default. On Windows, if a fullscreen app is in front, reminders wait until you leave
+fullscreen. On macOS and Linux they don't cover fullscreen apps.
 Reminders are designed not to take keyboard focus, so your typing keeps going where it was.
+
+Want breaks to interrupt anyway? Turn on **Settings → Fullscreen → Strict mode**. Breaks then
+show even over fullscreen videos, games, and presentations, and you can still close them. This
+works on Windows, macOS, and Linux X11 desktops (such as GNOME on Xorg). Wayland desktops don't
+let apps appear above fullscreen windows, and Settings tells you when that applies. Games that
+take over the screen in exclusive fullscreen can still hide a break. On macOS, BlinkBreak's Dock
+icon steps aside while a strict break is showing, because macOS only lets menu-bar apps cover
+fullscreen apps.
+</details>
+
+<details>
+<summary><b>Can I start a break with a keyboard shortcut?</b></summary>
+
+Yes. While BlinkBreak is running, run it again with `--break-now` and it starts a break right
+away, even over a fullscreen app. Bind that command to a shortcut in your system's keyboard settings:
+
+- Windows: `"%LOCALAPPDATA%\BlinkBreak\blinkbreak.exe" --break-now`
+- macOS: `/Applications/BlinkBreak.app/Contents/MacOS/blinkbreak --break-now`
+- Linux (`.deb`): `blinkbreak --break-now`
 </details>
 
 <details>

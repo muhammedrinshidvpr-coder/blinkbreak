@@ -103,7 +103,8 @@ Use **Quit BlinkBreak** in the icon's menu to stop it.
 
 Reminders appear by themselves, stay a few seconds, and close on their own. They are designed
 not to steal typing focus. On Windows they also wait if a fullscreen video, game, or presentation
-is open; that detection isn't available on macOS/Linux yet.
+is open; that detection isn't available on macOS/Linux yet. Want breaks to show even then? Turn on
+**Strict mode** (see below).
 
 On Linux, BlinkBreak notices when you step away on GNOME and KDE desktops. On other desktops
 the timers count while the app is open, and **Settings** tells you so.
@@ -114,6 +115,9 @@ Open the dashboard → **Settings**:
 
 - **Start at login**: on from the first launch, so BlinkBreak opens by itself, quietly in the
   tray / menu bar, every time you start your computer. Turn it off here if you prefer
+- **Strict mode** (under **Fullscreen**): breaks show even over fullscreen videos, games, and
+  presentations, instead of waiting. Off by default. You can still close a break. On Linux this
+  needs an X11 desktop (such as GNOME on Xorg); Settings tells you if your desktop doesn't allow it
 - **Appearance**: Light, Dark, or follow the system
 - **Reminders**: turn each one on/off and choose how often
 - **Quiet hours**: no reminders at night

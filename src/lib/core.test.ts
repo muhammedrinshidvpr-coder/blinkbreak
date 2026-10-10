@@ -68,6 +68,25 @@ describe('reminder presentation + timing rules', () => {
   });
 });
 
+describe('strict mode setting', () => {
+  it('is off by default and keeps a saved choice', () => {
+    expect(DEFAULT_SETTINGS.strictMode).toBe(false);
+    expect(sanitizeSettings({ ...DEFAULT_SETTINGS, strictMode: true }).strictMode).toBe(true);
+  });
+
+  it('carries over settings saved before strict mode existed', () => {
+    const saved = JSON.parse(JSON.stringify(DEFAULT_SETTINGS));
+    delete saved.strictMode;
+    saved.fullscreenDefer = true; // what every 0.5 install stored
+
+    const upgraded = sanitizeSettings(saved);
+    expect(upgraded.strictMode).toBe(false);
+    expect(upgraded).not.toHaveProperty('fullscreenDefer');
+    expect(sanitizeSettings({ ...saved, fullscreenDefer: false }).strictMode).toBe(true);
+    expect(sanitizeSettings({ ...saved, strictMode: 'yes' }).strictMode).toBe(false);
+  });
+});
+
 describe('appearance setting', () => {
   it('defaults to system and repairs invalid saved values', async () => {
     const { sanitizeSettings, DEFAULT_SETTINGS } = await import('./types');

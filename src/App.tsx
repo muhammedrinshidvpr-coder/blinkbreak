@@ -132,12 +132,14 @@ export default function App() {
     localStorage.setItem(STATS_KEY, JSON.stringify(stats));
   }, [stats]);
 
-  const presentReminder = async (reminder: ReminderEvent): Promise<boolean> => {
+  /** `userInitiated`: the person asked for this break, so it never waits and shows on top like strict mode. */
+  const presentReminder = async (reminder: ReminderEvent, { userInitiated = false } = {}): Promise<boolean> => {
     if (reminderVisibleRef.current || presentingReminderRef.current) return false;
     presentingReminderRef.current = true;
+    const strict = settings.strictMode || userInitiated;
 
     try {
-      if (isTauriRuntime() && settings.fullscreenDefer && await isFullscreenActive()) {
+      if (isTauriRuntime() && !strict && await isFullscreenActive()) {
         pendingReminderRef.current ??= reminder;
         return false;
       }
@@ -164,6 +166,7 @@ export default function App() {
             theme: resolvedTheme,
             chime: chimeFor(reminder.kind, settings),
             volume: settings.sound.volume,
+            overFullscreen: strict,
           });
         } catch {
           reminderVisibleRef.current = false;
@@ -281,7 +284,7 @@ export default function App() {
 
   const handleBreakNow = () => {
     const kind: ReminderKind = 'lookaway';
-    void presentReminder({ kind, dueAtMs: Date.now(), ...REMINDER_META[kind] });
+    void presentReminder({ kind, dueAtMs: Date.now(), ...REMINDER_META[kind] }, { userInitiated: true });
   };
   const handleBreakNowRef = useRef(handleBreakNow);
   useEffect(() => {
@@ -345,6 +348,7 @@ export default function App() {
           <HowItWorks
             idleSensingSupported={platformCaps?.idle_supported ?? !isTauriRuntime()}
             fullscreenSensingSupported={platformCaps?.fullscreen_supported ?? !isTauriRuntime()}
+            strictMode={settings.strictMode}
           />
         )}
         {tab === 'settings' && (
@@ -354,6 +358,8 @@ export default function App() {
             onReset={resetSettings}
             autostartAvailable={isTauriRuntime()}
             onAutostartChange={changeAutostart}
+            fullscreenWaitSupported={platformCaps?.fullscreen_supported ?? !isTauriRuntime()}
+            overFullscreenSupported={platformCaps?.over_fullscreen_supported ?? !isTauriRuntime()}
             supportNote={
               platformCaps
                 ? platformSupportNote(platformCaps)

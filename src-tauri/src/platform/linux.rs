@@ -84,17 +84,63 @@ pub fn fullscreen_active() -> bool {
     false
 }
 
+/// GTK draws through Wayland when the session has one, unless GDK_BACKEND forces X11.
+fn uses_wayland(wayland_display: Option<&str>, gdk_backend: Option<&str>) -> bool {
+    let wayland_session = wayland_display.is_some_and(|display| !display.is_empty());
+    let forced_x11 = gdk_backend.is_some_and(|backend| backend.trim_start().starts_with("x11"));
+    wayland_session && !forced_x11
+}
+
+fn over_fullscreen_supported() -> bool {
+    // Wayland gives ordinary apps no way to stack above other windows; X11 window managers
+    // honor the notification window type, which they keep above fullscreen windows.
+    !uses_wayland(
+        std::env::var("WAYLAND_DISPLAY").ok().as_deref(),
+        std::env::var("GDK_BACKEND").ok().as_deref(),
+    )
+}
+
+/// Strict mode: marks the hidden reminder as a notification window, which X11 window managers
+/// such as GNOME's stack above fullscreen windows. Must run before the window is shown, since
+/// the window manager reads the type when it maps the window. No effect on Wayland.
+pub fn set_over_fullscreen(window: &tauri::WebviewWindow, enabled: bool) {
+    use gtk::{gdk::WindowTypeHint, prelude::GtkWindowExt};
+
+    let window_for_main = window.clone();
+    let _ = window.run_on_main_thread(move || {
+        let Ok(gtk_window) = window_for_main.gtk_window() else {
+            return;
+        };
+        gtk_window.set_type_hint(if enabled {
+            WindowTypeHint::Notification
+        } else {
+            WindowTypeHint::Normal
+        });
+        gtk_window.set_keep_above(true);
+    });
+}
+
 pub fn capabilities() -> PlatformCapabilities {
     PlatformCapabilities {
         platform: "linux".to_string(),
         idle_supported: idle_secs().is_some(),
         fullscreen_supported: false,
+        over_fullscreen_supported: over_fullscreen_supported(),
     }
 }
 
 #[cfg(test)]
 mod tests {
-    use super::milliseconds_to_seconds;
+    use super::{milliseconds_to_seconds, uses_wayland};
+
+    #[test]
+    fn detects_when_gtk_draws_through_wayland() {
+        assert!(uses_wayland(Some("wayland-0"), None));
+        assert!(uses_wayland(Some("wayland-0"), Some("wayland,x11")));
+        assert!(!uses_wayland(Some("wayland-0"), Some("x11")));
+        assert!(!uses_wayland(Some(""), None));
+        assert!(!uses_wayland(None, None));
+    }
 
     #[test]
     fn converts_mutter_idle_milliseconds_to_seconds() {

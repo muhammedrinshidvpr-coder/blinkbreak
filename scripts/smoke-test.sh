@@ -6,12 +6,18 @@
 # macOS also checks the DMG layout, CPU architecture, and code signature:
 # SMOKE_MACOS_SIGNING=adhoc (default) expects an ad-hoc signature, =notarized expects
 # Gatekeeper to accept the app with a stapled notarization ticket.
+# SMOKE_STRICT=1 also checks strict mode on a real desktop: it opens a fullscreen window,
+# runs `blinkbreak --break-now` against the running app, fails unless the break window is
+# on top, and saves screenshots to SMOKE_SHOTS.
 # It installs packages and kills BlinkBreak processes, so run it on CI runners only.
 set -euo pipefail
 
 bundle_dir=${1:?usage: smoke-test.sh <bundle-dir>}
 seconds=${SMOKE_SECONDS:-20}
 work=$(mktemp -d)
+ci_dir=$(cd "$(dirname "$0")/ci" && pwd)
+shots=${SMOKE_SHOTS:-$work/shots}
+mkdir -p "$shots"
 shopt -s nullglob
 
 # Errors go to stderr so they still show when raised inside $(...).
@@ -57,6 +63,94 @@ expect_running() {
   echo "OK: $label kept running for ${seconds}s"
 }
 
+strict_enabled() {
+  [ "${SMOKE_STRICT:-0}" = 1 ]
+}
+
+# A break asked for with --break-now uses the same "show above fullscreen" path as strict mode.
+# Each check asks the running app for a break twice: on the plain desktop (proving --break-now
+# reaches it), then over a fullscreen window. Look-away breaks last 20 s, hence the waits.
+strict_check_macos() {
+  local binary=$1 executable=$2 fullscreen="$work/fullscreen-window" checker="$work/onscreen-windows"
+  swiftc -O -o "$fullscreen" "$ci_dir/fullscreen-window.swift"
+  swiftc -O -o "$checker" "$ci_dir/onscreen-windows.swift"
+
+  "$binary" >"$work/strict-app.log" 2>&1 &
+  local app_pid=$!
+  sleep 10
+  local result=0
+
+  "$binary" --break-now
+  sleep 4
+  screencapture -x "$shots/macos-1-break-on-desktop.png" || true
+  "$checker" --break "$executable" || result=$?
+  sleep 25
+
+  if [ "$result" -eq 0 ]; then
+    "$fullscreen" &
+    local fullscreen_pid=$!
+    sleep 6
+    screencapture -x "$shots/macos-2-fullscreen.png" || true
+    "$checker" --fullscreen fullscreen-window || result=$?
+
+    "$binary" --break-now
+    sleep 4
+    screencapture -x "$shots/macos-3-break-over-fullscreen.png" || true
+    [ "$result" -ne 0 ] || "$checker" --fullscreen fullscreen-window --break "$executable" || result=$?
+    kill "$fullscreen_pid" 2>/dev/null || true
+  fi
+
+  stop_app "$app_pid" "$executable"
+  echo "--- BlinkBreak output ---"
+  cat "$work/strict-app.log"
+  [ "$result" -eq 0 ] || fail "strict-mode break check failed on macOS (see above)"
+  echo "OK: the break appeared on the desktop and above a macOS fullscreen window"
+}
+
+strict_check_linux() {
+  local binary=$1
+  sudo apt-get install -y mutter xterm xdotool x11-utils imagemagick >/dev/null
+  xvfb-run -a -s '-screen 0 1280x800x24' dbus-run-session -- \
+    bash "$ci_dir/linux-fullscreen-session.sh" "$binary" "$shots"
+}
+
+strict_check_windows() {
+  local exe=$1 process shots_win top_window
+  process=$(basename "$exe")
+  shots_win=$(cygpath -w "$shots")
+  top_window=$(cygpath -w "$ci_dir/top-window.ps1")
+
+  "$exe" >"$work/strict-app.log" 2>&1 &
+  local app_pid=$!
+  sleep 10
+  local result=0
+
+  "$exe" --break-now
+  sleep 4
+  pwsh -NoProfile -File "$top_window" \
+    -ExpectTitle 'BlinkBreak reminder' -Screenshot "$shots_win\\windows-1-break-on-desktop.png" || result=$?
+  sleep 25
+
+  if [ "$result" -eq 0 ]; then
+    pwsh -NoProfile -File "$(cygpath -w "$ci_dir/fullscreen-window.ps1")" &
+    local fullscreen_pid=$!
+    sleep 8
+    pwsh -NoProfile -File "$top_window" \
+      -ExpectTitle 'Fullscreen test' -Screenshot "$shots_win\\windows-2-fullscreen.png" || result=$?
+
+    "$exe" --break-now
+    sleep 4
+    [ "$result" -ne 0 ] || pwsh -NoProfile -File "$top_window" \
+      -ExpectTitle 'BlinkBreak reminder' -Screenshot "$shots_win\\windows-3-break-over-fullscreen.png" || result=$?
+    taskkill /F /FI "WINDOWTITLE eq Fullscreen test" >/dev/null 2>&1 || true
+    kill "$fullscreen_pid" 2>/dev/null || true
+  fi
+
+  stop_app "$app_pid" "$process"
+  [ "$result" -eq 0 ] || fail "strict-mode break check failed on Windows (see above)"
+  echo "OK: the break appeared on the desktop and above an always-on-top fullscreen window"
+}
+
 smoke_macos() {
   local dmg mount="$work/mnt" app="$work/BlinkBreak.app"
   dmg=$(only_file ".dmg" "$bundle_dir"/dmg/*.dmg)
@@ -98,6 +192,7 @@ smoke_macos() {
   esac
 
   expect_running macos-app "$executable" "$binary"
+  if strict_enabled; then strict_check_macos "$binary" "$executable"; fi
 }
 
 smoke_linux() {
@@ -123,6 +218,7 @@ smoke_linux() {
   expect_running linux-appimage "$(basename "$binary")" \
     xvfb-run -a dbus-run-session -- "$(realpath "$appimage")" --appimage-extract-and-run
 
+  if strict_enabled; then strict_check_linux "$binary"; fi
   sudo apt-get remove -y "$package" >/dev/null
 }
 
@@ -137,6 +233,7 @@ smoke_windows() {
   [ -n "$exe" ] || fail "the installer did not install BlinkBreak.exe under $LOCALAPPDATA"
   echo "Installed to $exe"
   expect_running windows-app "$(basename "$exe")" "$exe"
+  if strict_enabled; then strict_check_windows "$exe"; fi
 }
 
 case "$(uname -s)" in

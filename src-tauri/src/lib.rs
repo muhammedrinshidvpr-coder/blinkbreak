@@ -1,6 +1,6 @@
 //! BlinkBreak native shell (Tauri 2 + Rust).
 //! CONTRACT:
-//! - GUARANTEES: single instance; tray controls; `get_idle_secs` reports idle seconds where a supported OS backend is available; `get_platform_capabilities` honestly reports idle/fullscreen support; reminder window never steals focus and always closes (native deadline watchdog); `--minimized` login launch stays in tray.
+//! - GUARANTEES: single instance; tray controls; `get_idle_secs` reports idle seconds where a supported OS backend is available; `get_platform_capabilities` honestly reports idle/fullscreen support; reminder window never steals focus and always closes (native deadline watchdog); strict-mode reminders are raised above fullscreen apps where the OS allows (`over_fullscreen`); `--minimized` login launch stays in tray; `blinkbreak --break-now` starts a break in the running instance.
 //! - EXPECTS: Windows 10/11 with WebView2; macOS 10.15+; Linux with WebKitGTK system deps (see README).
 //! - DOES NOT: record keys/apps/titles; use webcam; send data anywhere.
 
@@ -25,6 +25,10 @@ fn get_idle_secs() -> Option<u64> {
 fn get_platform_capabilities() -> platform::PlatformCapabilities {
     platform::capabilities()
 }
+
+/// Second-launch argument that starts a break in the running instance, e.g. from a keyboard
+/// shortcut. A first launch ignores it: the reminder window may not be listening yet.
+const BREAK_NOW_ARG: &str = "--break-now";
 
 /// Identifies the reminder currently on screen (0 = none) so a stale deadline never hides a newer one.
 #[derive(Default)]
@@ -56,6 +60,7 @@ fn show_reminder(
     theme: String,
     chime: bool,
     volume: f64,
+    over_fullscreen: bool,
 ) -> Result<(), String> {
     let Some(win) = app.get_webview_window("reminder") else {
         return Err("no reminder window".into());
@@ -107,6 +112,8 @@ fn show_reminder(
         }),
     )
     .map_err(|e| e.to_string())?;
+    // Right before showing: macOS and Linux decide which Space/layer a window joins when it appears.
+    platform::set_over_fullscreen(&win, over_fullscreen);
     // `focusable: false` in tauri.conf.json keeps this from stealing typing focus on every show.
     win.show().map_err(|e| e.to_string())?;
 
@@ -125,6 +132,7 @@ fn show_reminder(
         if let Some(win) = app_for_deadline.get_webview_window("reminder") {
             let _ = win.hide();
         }
+        platform::reminder_hidden(&app_for_deadline);
         let _ = app_for_deadline.emit(
             "blinkbreak:reminder-action",
             serde_json::json!({ "kind": kind, "action": expiry_action }),
@@ -147,6 +155,7 @@ fn hide_reminder(
     if let Some(win) = app.get_webview_window("reminder") {
         win.hide().map_err(|e| e.to_string())?;
     }
+    platform::reminder_hidden(&app);
     Ok(())
 }
 
@@ -158,12 +167,23 @@ fn show_dashboard(app: &tauri::AppHandle) {
     }
 }
 
+/// Asks the dashboard's scheduler (which runs even while hidden) to show a break now.
+fn start_break(app: &tauri::AppHandle) {
+    if let Some(w) = app.get_webview_window("main") {
+        let _ = w.emit("blinkbreak:break-now", ());
+    }
+}
+
 #[cfg_attr(mobile, tauri::mobile_entry_point)]
 pub fn run() {
     tauri::Builder::default()
         .manage(ReminderSlot::default())
-        .plugin(tauri_plugin_single_instance::init(|app, _args, _cwd| {
-            show_dashboard(app);
+        .plugin(tauri_plugin_single_instance::init(|app, args, _cwd| {
+            if args.iter().any(|a| a == BREAK_NOW_ARG) {
+                start_break(app);
+            } else {
+                show_dashboard(app);
+            }
         }))
         .setup(|app| {
             if let Some(main_window) = app.get_webview_window("main") {
@@ -199,12 +219,7 @@ pub fn run() {
                 .on_menu_event(|app, e| match e.id.as_ref() {
                     "quit" => app.exit(0),
                     "open" => show_dashboard(app),
-                    "break-now" => {
-                        // Main window JS runs even while hidden; it shows the reminder card.
-                        if let Some(w) = app.get_webview_window("main") {
-                            let _ = w.emit("blinkbreak:break-now", ());
-                        }
-                    }
+                    "break-now" => start_break(app),
                     "pause" => {
                         if let Some(w) = app.get_webview_window("main") {
                             let _ = w.emit("blinkbreak:pause-15", ());

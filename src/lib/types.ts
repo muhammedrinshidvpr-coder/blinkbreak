@@ -30,7 +30,8 @@ export interface AppSettings {
   /** Appearance: follow the system, or force light/dark. */
   theme: ThemeSetting;
   autostart: boolean;
-  fullscreenDefer: boolean;
+  /** Strict mode: breaks show even over fullscreen apps instead of waiting them out. */
+  strictMode: boolean;
   pauseUntilMs: number | null;
 }
 
@@ -108,7 +109,7 @@ export const DEFAULT_SETTINGS: AppSettings = {
   reducedMotion: false,
   theme: 'system',
   autostart: true,
-  fullscreenDefer: true,
+  strictMode: false,
   pauseUntilMs: null,
 };
 
@@ -150,5 +151,9 @@ export function sanitizeSettings(raw: unknown): AppSettings {
   const merged = { ...fallback, ...(raw as Partial<AppSettings>) };
   merged.reminders = { ...fallback.reminders, ...((raw as AppSettings).reminders ?? {}) };
   if (!['system', 'light', 'dark'].includes(merged.theme)) merged.theme = 'system';
+  // 0.5 and older stored the inverse as `fullscreenDefer`, which Settings never exposed.
+  const legacy = raw as { fullscreenDefer?: unknown; strictMode?: unknown };
+  if (typeof legacy.strictMode !== 'boolean') merged.strictMode = legacy.fullscreenDefer === false;
+  delete (merged as { fullscreenDefer?: unknown }).fullscreenDefer;
   return merged;
 }

@@ -4,10 +4,11 @@ import { cloneSettings, DEFAULT_SETTINGS } from './lib/types';
 
 const native = vi.hoisted(() => ({
   fullscreen: true,
-  platformCapabilities: { platform: 'windows', idle_supported: true, fullscreen_supported: true } as {
+  platformCapabilities: { platform: 'windows', idle_supported: true, fullscreen_supported: true, over_fullscreen_supported: true } as {
     platform: string;
     idle_supported: boolean;
     fullscreen_supported: boolean;
+    over_fullscreen_supported: boolean;
   } | null,
   showNativeReminder: vi.fn(async () => true),
   isFullscreenActive: vi.fn(async () => native.fullscreen),
@@ -50,7 +51,7 @@ describe('App reminder orchestration', () => {
     vi.setSystemTime(new Date(2026, 8, 30, 9, 0, 0));
     localStorage.clear();
     native.fullscreen = true;
-    native.platformCapabilities = { platform: 'windows', idle_supported: true, fullscreen_supported: true };
+    native.platformCapabilities = { platform: 'windows', idle_supported: true, fullscreen_supported: true, over_fullscreen_supported: true };
     native.showNativeReminder.mockClear();
     native.isFullscreenActive.mockClear();
     native.autostartOs = null;
@@ -82,7 +83,46 @@ describe('App reminder orchestration', () => {
     await act(async () => vi.advanceTimersByTimeAsync(1000));
 
     expect(native.showNativeReminder).toHaveBeenCalledTimes(1);
-    expect(native.showNativeReminder).toHaveBeenCalledWith(expect.objectContaining({ kind: 'posture' }));
+    expect(native.showNativeReminder).toHaveBeenCalledWith(expect.objectContaining({ kind: 'posture', overFullscreen: false }));
+  });
+
+  it('shows a due break over a fullscreen app in strict mode', async () => {
+    const settings = cloneSettings(DEFAULT_SETTINGS);
+    settings.strictMode = true;
+    settings.reminders.blink.intervalSec = 60;
+    localStorage.setItem('blinkbreak.settings.v1', JSON.stringify(settings));
+
+    render(<App />);
+    await flushPoll();
+
+    expect(native.fullscreen).toBe(true);
+    expect(native.showNativeReminder).toHaveBeenCalledTimes(1);
+    expect(native.showNativeReminder).toHaveBeenCalledWith(expect.objectContaining({ kind: 'blink', overFullscreen: true }));
+  });
+
+  it('shows a break you ask for right away, even over fullscreen without strict mode', async () => {
+    render(<App />);
+    await flushPoll();
+    expect(native.showNativeReminder).not.toHaveBeenCalled();
+
+    fireEvent.click(screen.getByTestId('dash-break-now'));
+    await flushPoll();
+
+    expect(native.showNativeReminder).toHaveBeenCalledWith(expect.objectContaining({ kind: 'lookaway', overFullscreen: true }));
+  });
+
+  it('explains on Linux Wayland that strict mode cannot cover fullscreen windows', async () => {
+    const settings = cloneSettings(DEFAULT_SETTINGS);
+    settings.strictMode = true;
+    localStorage.setItem('blinkbreak.settings.v1', JSON.stringify(settings));
+    native.platformCapabilities = { platform: 'linux', idle_supported: true, fullscreen_supported: false, over_fullscreen_supported: false };
+    render(<App />);
+    await flushPoll();
+
+    fireEvent.click(screen.getByTestId('tab-settings'));
+
+    expect(screen.getByTestId('settings-strict')).toBeChecked();
+    expect(screen.getByTestId('settings-strict-note')).toHaveTextContent('Wayland');
   });
 
   it('does not release a fullscreen-pending reminder after the schedule is paused', async () => {
@@ -111,7 +151,7 @@ describe('App reminder orchestration', () => {
   });
 
   it('shows platform limitations in Settings when native sensing is unsupported', async () => {
-    native.platformCapabilities = { platform: 'linux', idle_supported: false, fullscreen_supported: false };
+    native.platformCapabilities = { platform: 'linux', idle_supported: false, fullscreen_supported: false, over_fullscreen_supported: false };
     render(<App />);
     await flushPoll();
 
