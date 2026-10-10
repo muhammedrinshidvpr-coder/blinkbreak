@@ -20,6 +20,9 @@ npm run tauri build
 # -> src-tauri/target/release/bundle/nsis/BlinkBreak_*_setup.exe
 ```
 
+On macOS or Linux, see [Build from source](README.md#build-from-source) for the system
+packages and the `--bundles dmg` / `--bundles deb,appimage` commands.
+
 ## Ground rules
 
 - **Always gentle, never blocking.** Every reminder must be dismissible and
@@ -44,19 +47,27 @@ npm run tauri build
 
 ## Release flow
 
-Every push to `master` and every pull request runs the tests and builds the
-Windows installer (uploaded as a workflow artifact).
+Every push to `master` and every pull request runs the tests, then builds the
+Windows, macOS (Apple Silicon and Intel), and Linux packages on their own systems.
+Each package is installed and launched by `scripts/smoke-test.sh`, then uploaded as a
+workflow artifact you can download and try.
 
 To publish a release:
 
 1. Bump `version` in `package.json`, `src-tauri/tauri.conf.json`, and
-   `src-tauri/Cargo.toml` (all three must match).
+   `src-tauri/Cargo.toml` (all three must match), then run `npm install` and
+   `cargo check` so `package-lock.json` and `Cargo.lock` follow.
 2. In `CHANGELOG.md`, rename `## [Unreleased]` to `## [0.2.0] - YYYY-MM-DD`
    (add a fresh empty `## [Unreleased]` above it) and update the links at the bottom.
 3. Commit, then tag and push: `git tag v0.2.0 && git push origin v0.2.0`.
-4. `release.yml` checks the tag matches the app version, runs the tests, builds
-   the installer, and publishes a GitHub Release. The notes are that version's
-   CHANGELOG section plus install help and a `SHA256SUMS.txt` checksum.
+4. `release.yml` checks the tag matches the app version, runs the tests, builds and
+   smoke-tests every platform, renames the files to plain names
+   (`scripts/release-assets.mjs`, e.g. `BlinkBreak-Mac-AppleSilicon.dmg`), and publishes a
+   GitHub Release. The notes are that version's CHANGELOG section plus install help and a
+   `SHA256SUMS.txt` checksum. Keep the plain names stable: the README links to
+   `releases/latest/download/<name>`.
+5. macOS signing: with no `APPLE_*` secrets the DMGs are ad-hoc signed and users approve the
+   app once in Privacy & Security. Add all six secrets listed in `release.yml` to notarize.
 
 Please add a line under `## [Unreleased]` in `CHANGELOG.md` for any
 user-visible change in your PR.

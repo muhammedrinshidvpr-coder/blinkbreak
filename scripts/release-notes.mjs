@@ -1,9 +1,12 @@
 // Usage: node scripts/release-notes.mjs <version> <installer-dir>
 // Prints release notes (the CHANGELOG.md section for <version> plus install help and
 // checksums) and writes SHA256SUMS.txt next to the installers.
+// The installer dir is searched recursively for Windows (.exe), macOS (.dmg),
+// and Linux (.deb, .AppImage) artifacts; the release workflow points it at the plain-named
+// copies from release-assets.mjs.
 import { createHash } from 'node:crypto';
-import { readdirSync, readFileSync, writeFileSync } from 'node:fs';
-import { join } from 'node:path';
+import { readdirSync, readFileSync, statSync, writeFileSync } from 'node:fs';
+import { basename, join } from 'node:path';
 
 const [version, installerDir] = process.argv.slice(2);
 if (!version || !installerDir) {
@@ -21,30 +24,83 @@ const rest = changelog.slice(start + 1);
 const end = rest.findIndex((line) => line.startsWith('## [') || /^\[[^\]]+\]:/.test(line));
 const section = (end === -1 ? rest : rest.slice(0, end)).join('\n').trim();
 
-const installers = readdirSync(installerDir).filter((name) => name.endsWith('.exe'));
-if (installers.length === 0) {
-  console.error(`no .exe found in ${installerDir}`);
+const ARTIFACT_EXTS = ['.exe', '.dmg', '.deb', '.AppImage'];
+
+function collectInstallers(dir) {
+  const found = [];
+  for (const entry of readdirSync(dir)) {
+    const full = join(dir, entry);
+    if (statSync(full).isDirectory()) {
+      found.push(...collectInstallers(full));
+    } else if (ARTIFACT_EXTS.some((ext) => entry.endsWith(ext))) {
+      found.push(full);
+    }
+  }
+  return found.sort();
+}
+
+const installerPaths = collectInstallers(installerDir);
+if (installerPaths.length === 0) {
+  console.error(`no installer artifacts found in ${installerDir}`);
   process.exit(1);
 }
-const sums = installers.map((name) => {
-  const hash = createHash('sha256').update(readFileSync(join(installerDir, name))).digest('hex');
-  return `${hash}  ${name}`;
+const sums = installerPaths.map((full) => {
+  const hash = createHash('sha256').update(readFileSync(full)).digest('hex');
+  return `${hash}  ${basename(full)}`;
 });
 writeFileSync(join(installerDir, 'SHA256SUMS.txt'), `${sums.join('\n')}\n`);
+
+const byExt = (ext) => installerPaths.map((p) => basename(p)).filter((n) => n.endsWith(ext));
+const win = byExt('.exe');
+const mac = byExt('.dmg');
+const deb = byExt('.deb');
+const appimage = byExt('.AppImage');
+// Each entry is one Markdown block (heading, list, or paragraph), separated by blank lines
+// so a paragraph never merges into the list above it.
+const blocks = [];
+const list = (names, label = () => '') => names.map((name) => `- **\`${name}\`**${label(name)}`).join('\n');
+if (win.length > 0) {
+  blocks.push('### Windows', list(win));
+  blocks.push(`Run the installer. No admin rights needed. If Windows says **"Windows protected your PC"**, click **More info → Run anyway**
+(the installer isn't paid-code-signed yet).`);
+}
+if (mac.length > 0) {
+  const chip = (name) => (name.includes('AppleSilicon') ? ': Macs with an M1 chip or newer' : name.includes('Intel') ? ': Macs with an Intel processor' : '');
+  blocks.push('### macOS', list(mac, chip));
+  if (process.env.MACOS_NOTARIZED === 'true') {
+    blocks.push(`These DMGs are signed and notarized by Apple. Open the disk image and drag BlinkBreak to Applications.`);
+  } else {
+    blocks.push(`Open the disk image and drag BlinkBreak to Applications. The app isn't notarized by Apple yet, so the first time
+you open it macOS says it can't verify BlinkBreak: click **Done**, open **System Settings → Privacy & Security**,
+and click **Open Anyway** next to BlinkBreak. You only need to do this once.`);
+  }
+}
+if (deb.length > 0 || appimage.length > 0) {
+  const howTo = (name) =>
+    name.endsWith('.deb')
+      ? `: Debian/Ubuntu. Install with \`sudo apt install ./${name}\` (remove later with \`sudo apt remove blink-break\`).`
+      : `: any distribution. Run \`chmod +x ${name}\`, then open it (your distribution may need FUSE for AppImages).`;
+  blocks.push('### Linux', list([...deb, ...appimage], howTo));
+  blocks.push(`Idle sensing uses GNOME/Mutter or freedesktop ScreenSaver D-Bus when available; otherwise timers count while BlinkBreak is open and Settings explains the limitation. Fullscreen detection is not available on Linux yet.`);
+}
 
 console.log(`${section}
 
 ## Install
 
-1. Download **\`${installers[0]}\`** below and run it. No admin rights needed.
-2. If Windows says **"Windows protected your PC"**, click **More info → Run anyway**
-   (the installer isn't paid-code-signed yet).
-3. BlinkBreak lives in your system tray. Right-click the icon for options.
+${blocks.join('\n\n')}
+
+BlinkBreak lives in your system tray / menu bar. Click the icon for options.
+New to this? Follow the [step-by-step install guide](https://github.com/muhammedrinshidvpr-coder/blinkbreak/blob/master/docs/INSTALL.md).
 
 ## Verify the download (optional)
 
-\`\`\`
+The SHA-256 value for every installer is listed below. Compute the hash of the downloaded file
+and compare it to the matching filename:
+
+\`\`\`text
 ${sums.join('\n')}
 \`\`\`
 
-PowerShell: \`Get-FileHash .\\${installers[0]}\``);
+Windows PowerShell: \`Get-FileHash .\\<downloaded-file> -Algorithm SHA256\`
+macOS/Linux: \`shasum -a 256 <downloaded-file>\``);

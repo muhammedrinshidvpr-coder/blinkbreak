@@ -21,6 +21,7 @@ export function Dashboard({
   activeSec,
   status,
   stats,
+  idleDetectionSupported = true,
   onBreakNow,
   onPause,
   onResume,
@@ -28,6 +29,8 @@ export function Dashboard({
   activeSec: number;
   status: ScheduleStatus;
   stats: DayStats;
+  /** False on platforms where reminders count app-open time rather than OS idle time. */
+  idleDetectionSupported?: boolean;
   onBreakNow: () => void;
   onPause: (min: number) => void;
   onResume: () => void;
@@ -43,7 +46,9 @@ export function Dashboard({
   if (status.state === 'active') {
     eyebrow = 'Next reminder';
     headline = REMINDER_META[status.next.kind].title;
-    when = `in ${Math.max(1, Math.ceil(status.next.inSec / 60))}m of screen time`;
+    when = idleDetectionSupported
+      ? `in ${Math.max(1, Math.ceil(status.next.inSec / 60))}m of screen time`
+      : `in ${Math.max(1, Math.ceil(status.next.inSec / 60))}m while BlinkBreak is open`;
   } else if (status.state === 'paused') {
     eyebrow = 'Paused';
     headline = 'Take your time';
@@ -82,7 +87,7 @@ export function Dashboard({
 
       <dl className="bb-panel bb-stats" aria-label="Today">
         <div>
-          <dt>Active today</dt>
+          <dt>{idleDetectionSupported ? 'Active today' : 'BlinkBreak open today'}</dt>
           <dd data-testid="dash-active">{formatActive(activeSec)}</dd>
         </div>
         <div>

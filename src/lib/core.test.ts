@@ -79,7 +79,7 @@ describe('appearance setting', () => {
     expect(sanitizeSettings({ ...saved, theme: 'dark' }).theme).toBe('dark');
   });
 
-  it('resolves System from the Windows preference', async () => {
+  it('resolves System from the OS preference', async () => {
     const { resolveTheme } = await import('./theme');
     expect(resolveTheme('system', true)).toBe('dark');
     expect(resolveTheme('system', false)).toBe('light');

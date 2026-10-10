@@ -27,7 +27,7 @@ export interface AppSettings {
   quietHours: { enabled: boolean; start: string; end: string };
   sound: { enabled: boolean; volume: number };
   reducedMotion: boolean;
-  /** Appearance: follow Windows, or force light/dark. */
+  /** Appearance: follow the system, or force light/dark. */
   theme: ThemeSetting;
   autostart: boolean;
   fullscreenDefer: boolean;

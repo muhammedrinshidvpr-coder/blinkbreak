@@ -1,6 +1,6 @@
 /**
  * Activity classification: decides how many ACTIVE seconds elapsed between polls.
- * The native side (Rust GetLastInputInfo) reports idleMs; this pure module turns
+ * The native side (Rust platform backend) reports idleMs; this pure module turns
  * a poll sequence into active seconds, handling sleep/wake gaps.
  * Pure + fully unit-testable (no OS calls here).
  */
