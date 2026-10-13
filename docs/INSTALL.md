@@ -17,17 +17,17 @@ Click the file for your computer. It always downloads the newest version:
 
 | Your computer | Download |
 |---|---|
-| Windows 10 / 11 | [**BlinkBreak-Windows-Setup.exe**](https://github.com/muhammedrinshidvpr-coder/blinkbreak/releases/latest/download/BlinkBreak-Windows-Setup.exe) (about 2 MB) |
-| Mac with Apple Silicon (M1, M2, M3, M4…) | [**BlinkBreak-Mac-AppleSilicon.dmg**](https://github.com/muhammedrinshidvpr-coder/blinkbreak/releases/latest/download/BlinkBreak-Mac-AppleSilicon.dmg) |
-| Mac with an Intel processor | [**BlinkBreak-Mac-Intel.dmg**](https://github.com/muhammedrinshidvpr-coder/blinkbreak/releases/latest/download/BlinkBreak-Mac-Intel.dmg) |
-| Ubuntu / Debian | [**BlinkBreak-Linux.deb**](https://github.com/muhammedrinshidvpr-coder/blinkbreak/releases/latest/download/BlinkBreak-Linux.deb) |
-| Any other Linux | [**BlinkBreak-Linux.AppImage**](https://github.com/muhammedrinshidvpr-coder/blinkbreak/releases/latest/download/BlinkBreak-Linux.AppImage) |
+| Windows 10 / 11 | [**BlinkBreak-Windows-Setup.exe**](https://github.com/rinshidvp/blinkbreak/releases/latest/download/BlinkBreak-Windows-Setup.exe) (about 2 MB) |
+| Mac with Apple Silicon (M1, M2, M3, M4…) | [**BlinkBreak-Mac-AppleSilicon.dmg**](https://github.com/rinshidvp/blinkbreak/releases/latest/download/BlinkBreak-Mac-AppleSilicon.dmg) |
+| Mac with an Intel processor | [**BlinkBreak-Mac-Intel.dmg**](https://github.com/rinshidvp/blinkbreak/releases/latest/download/BlinkBreak-Mac-Intel.dmg) |
+| Ubuntu / Debian | [**BlinkBreak-Linux.deb**](https://github.com/rinshidvp/blinkbreak/releases/latest/download/BlinkBreak-Linux.deb) |
+| Any other Linux | [**BlinkBreak-Linux.AppImage**](https://github.com/rinshidvp/blinkbreak/releases/latest/download/BlinkBreak-Linux.AppImage) |
 
 Not sure which Mac you have? Click the **Apple menu → About This Mac**. If it says **Chip: Apple M…**,
 take **AppleSilicon**. If it says **Processor: … Intel**, take **Intel**.
 
 You can also see every version, with what changed, on the
-[releases page](https://github.com/muhammedrinshidvpr-coder/blinkbreak/releases).
+[releases page](https://github.com/rinshidvp/blinkbreak/releases).
 
 ## 2. Install
 
@@ -133,8 +133,8 @@ First turn off **Settings → Start at login**, then **Quit BlinkBreak** from th
 
 ## Questions or ideas?
 
-- Say hi or ask anything in [Discussions](https://github.com/muhammedrinshidvpr-coder/blinkbreak/discussions)
-- Found a bug? [Open an issue](https://github.com/muhammedrinshidvpr-coder/blinkbreak/issues/new/choose)
+- Say hi or ask anything in [Discussions](https://github.com/rinshidvp/blinkbreak/discussions)
+- Found a bug? [Open an issue](https://github.com/rinshidvp/blinkbreak/issues/new/choose)
 
 *BlinkBreak encourages healthy screen habits (based on the 20-20-20 rule for eye strain). It is
 not a medical device. If your eyes hurt often, see an eye doctor.*

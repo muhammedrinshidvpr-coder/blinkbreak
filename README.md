@@ -5,10 +5,10 @@
 **Calm reminders to blink, look away, and move.**<br>
 A small, private desktop app for long screen sessions. Windows, macOS, and Linux builds share the same calm UI.
 
-[![Download](https://img.shields.io/badge/Download-Windows_%7C_macOS_%7C_Linux-1d1d1f?style=for-the-badge)](https://github.com/muhammedrinshidvpr-coder/blinkbreak/releases/latest)
+[![Download](https://img.shields.io/badge/Download-Windows_%7C_macOS_%7C_Linux-1d1d1f?style=for-the-badge)](https://github.com/rinshidvp/blinkbreak/releases/latest)
 
-[![Latest release](https://img.shields.io/github/v/release/muhammedrinshidvpr-coder/blinkbreak?color=7f9f8f)](https://github.com/muhammedrinshidvpr-coder/blinkbreak/releases/latest)
-[![Build](https://github.com/muhammedrinshidvpr-coder/blinkbreak/actions/workflows/build-desktop.yml/badge.svg)](https://github.com/muhammedrinshidvpr-coder/blinkbreak/actions/workflows/build-desktop.yml)
+[![Latest release](https://img.shields.io/github/v/release/rinshidvp/blinkbreak?color=7f9f8f)](https://github.com/rinshidvp/blinkbreak/releases/latest)
+[![Build](https://github.com/rinshidvp/blinkbreak/actions/workflows/build-desktop.yml/badge.svg)](https://github.com/rinshidvp/blinkbreak/actions/workflows/build-desktop.yml)
 ![License: MIT](https://img.shields.io/badge/license-MIT-7f9f8f)
 
 <img src="docs/screenshots/blink-demo.gif" alt="A small pill at the top of the screen: an eye blinks slowly inside a thin ring that drains, then the pill fades away" width="480">
@@ -21,15 +21,15 @@ Free, about a minute to install. Click the file for your computer:
 
 | Your computer | Download |
 |---|---|
-| **Windows** 10 / 11 | [**BlinkBreak-Windows-Setup.exe**](https://github.com/muhammedrinshidvpr-coder/blinkbreak/releases/latest/download/BlinkBreak-Windows-Setup.exe) |
-| **Mac** with M1, M2, M3, M4… chip | [**BlinkBreak-Mac-AppleSilicon.dmg**](https://github.com/muhammedrinshidvpr-coder/blinkbreak/releases/latest/download/BlinkBreak-Mac-AppleSilicon.dmg) |
-| **Mac** with Intel processor | [**BlinkBreak-Mac-Intel.dmg**](https://github.com/muhammedrinshidvpr-coder/blinkbreak/releases/latest/download/BlinkBreak-Mac-Intel.dmg) |
-| **Linux**: Ubuntu / Debian | [**BlinkBreak-Linux.deb**](https://github.com/muhammedrinshidvpr-coder/blinkbreak/releases/latest/download/BlinkBreak-Linux.deb) |
-| **Linux**: any other distribution | [**BlinkBreak-Linux.AppImage**](https://github.com/muhammedrinshidvpr-coder/blinkbreak/releases/latest/download/BlinkBreak-Linux.AppImage) |
+| **Windows** 10 / 11 | [**BlinkBreak-Windows-Setup.exe**](https://github.com/rinshidvp/blinkbreak/releases/latest/download/BlinkBreak-Windows-Setup.exe) |
+| **Mac** with M1, M2, M3, M4… chip | [**BlinkBreak-Mac-AppleSilicon.dmg**](https://github.com/rinshidvp/blinkbreak/releases/latest/download/BlinkBreak-Mac-AppleSilicon.dmg) |
+| **Mac** with Intel processor | [**BlinkBreak-Mac-Intel.dmg**](https://github.com/rinshidvp/blinkbreak/releases/latest/download/BlinkBreak-Mac-Intel.dmg) |
+| **Linux**: Ubuntu / Debian | [**BlinkBreak-Linux.deb**](https://github.com/rinshidvp/blinkbreak/releases/latest/download/BlinkBreak-Linux.deb) |
+| **Linux**: any other distribution | [**BlinkBreak-Linux.AppImage**](https://github.com/rinshidvp/blinkbreak/releases/latest/download/BlinkBreak-Linux.AppImage) |
 
 Not sure which Mac? **Apple menu → About This Mac**: "Chip: Apple M…" means Apple Silicon.
 Then follow the **[step-by-step install guide](docs/INSTALL.md)**. All versions and checksums are on the
-[releases page](https://github.com/muhammedrinshidvpr-coder/blinkbreak/releases).
+[releases page](https://github.com/rinshidvp/blinkbreak/releases).
 
 ## Why BlinkBreak?
 
@@ -182,7 +182,7 @@ Both install and remind normally. Idle sensing is supported on macOS and on Linu
 that expose the relevant D-Bus service. System-wide fullscreen detection is only implemented
 on Windows; on Linux without a supported idle service, timers count while the app is open.
 Further native sensing improvements are tracked in
-[issue #5](https://github.com/muhammedrinshidvpr-coder/blinkbreak/issues/5).
+[issue #5](https://github.com/rinshidvp/blinkbreak/issues/5).
 </details>
 
 ## Health basis
@@ -231,10 +231,10 @@ Built with [Tauri 2](https://tauri.app), React, TypeScript, and Rust.
 
 Ideas, bug reports, designs, and PRs are all welcome. Good places to start are
 issues labelled
-[`good first issue`](https://github.com/muhammedrinshidvpr-coder/blinkbreak/labels/good%20first%20issue).
+[`good first issue`](https://github.com/rinshidvp/blinkbreak/labels/good%20first%20issue).
 See [CONTRIBUTING.md](CONTRIBUTING.md) and the
 [Code of Conduct](CODE_OF_CONDUCT.md). Questions →
-[Discussions](https://github.com/muhammedrinshidvpr-coder/blinkbreak/discussions).
+[Discussions](https://github.com/rinshidvp/blinkbreak/discussions).
 Security reports → [SECURITY.md](SECURITY.md). What's changed →
 [CHANGELOG.md](CHANGELOG.md).
 

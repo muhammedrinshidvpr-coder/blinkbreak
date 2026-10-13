@@ -8,7 +8,7 @@ fullscreen detection), so reports are welcome.
 
 - **Do not open a public issue** for a suspected vulnerability.
 - Preferred: use GitHub's private
-  [**Report a vulnerability**](https://github.com/muhammedrinshidvpr-coder/blinkbreak/security/advisories/new)
+  [**Report a vulnerability**](https://github.com/rinshidvp/blinkbreak/security/advisories/new)
   form (Security tab). Only maintainers can see it.
 - Or email **muhammedrinshidvpr@gmail.com** with a description and, if
   possible, steps to reproduce.

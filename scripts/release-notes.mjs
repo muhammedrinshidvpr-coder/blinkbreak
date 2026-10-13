@@ -91,7 +91,7 @@ console.log(`${section}
 ${blocks.join('\n\n')}
 
 BlinkBreak lives in your system tray / menu bar. Click the icon for options.
-New to this? Follow the [step-by-step install guide](https://github.com/muhammedrinshidvpr-coder/blinkbreak/blob/master/docs/INSTALL.md).
+New to this? Follow the [step-by-step install guide](https://github.com/rinshidvp/blinkbreak/blob/master/docs/INSTALL.md).
 
 ## Verify the download (optional)
 
