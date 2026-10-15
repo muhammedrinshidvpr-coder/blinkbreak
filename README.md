@@ -5,7 +5,9 @@
 **Calm reminders to blink, look away, and move.**<br>
 A small, private desktop app for long screen sessions. Windows, macOS, and Linux builds share the same calm UI.
 
-[![Download](https://img.shields.io/badge/Download-Windows_%7C_macOS_%7C_Linux-1d1d1f?style=for-the-badge)](https://github.com/rinshidvp/blinkbreak/releases/latest)
+[![Download](https://img.shields.io/badge/Download-Windows_%7C_macOS_%7C_Linux-1d1d1f?style=for-the-badge)](https://rinshidvp.github.io/blinkbreak/)
+
+**[New here? See how BlinkBreak works and download it →](https://rinshidvp.github.io/blinkbreak/)**
 
 [![Latest release](https://img.shields.io/github/v/release/rinshidvp/blinkbreak?color=7f9f8f)](https://github.com/rinshidvp/blinkbreak/releases/latest)
 [![Build](https://github.com/rinshidvp/blinkbreak/actions/workflows/build-desktop.yml/badge.svg)](https://github.com/rinshidvp/blinkbreak/actions/workflows/build-desktop.yml)

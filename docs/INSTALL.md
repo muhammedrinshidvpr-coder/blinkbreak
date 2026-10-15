@@ -120,6 +120,8 @@ Open the dashboard → **Settings**:
   needs an X11 desktop (such as GNOME on Xorg); Settings tells you if your desktop doesn't allow it
 - **Appearance**: Light, Dark, or follow the system
 - **Reminders**: turn each one on/off and choose how often
+- **Sound**: optional Blink, Start, and End previews, three sound characters, a volume
+  slider, and an end-of-break cue so you can look away without watching the timer
 - **Quiet hours**: no reminders at night
 
 ## Uninstall

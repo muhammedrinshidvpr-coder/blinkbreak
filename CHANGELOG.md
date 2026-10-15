@@ -6,6 +6,10 @@ All notable changes to BlinkBreak are listed here. The format follows
 
 ## [Unreleased]
 
+## [0.7.0] - 2026-10-15
+
+Gentle sounds that help you notice a reminder and know when a break is over.
+
 ### Added
 - **Sound** settings with Soft bell, Wooden tap, and Airy tone, a volume slider, and
   separate Start and End preview buttons. All sounds are synthesized offline.
@@ -14,6 +18,8 @@ All notable changes to BlinkBreak are listed here. The format follows
   stay silent.
 - A brief, clear single-note cue when a blink reminder appears, plus a Blink preview
   button. It follows the existing sound setting and volume and has no end cue.
+- A simple [download page](https://rinshidvp.github.io/blinkbreak/) explaining the
+  app, with clearly labeled Windows, Mac, and Linux downloads and installation help.
 
 ### Changed
 - The optional break chime now lives in Settings → Sound. Existing sound and reminder
@@ -172,7 +178,8 @@ First public release.
   start with Windows (minimized to tray).
 - Local-only daily stats. No network, accounts, or telemetry.
 
-[Unreleased]: https://github.com/rinshidvp/blinkbreak/compare/v0.6.0...HEAD
+[Unreleased]: https://github.com/rinshidvp/blinkbreak/compare/v0.7.0...HEAD
+[0.7.0]: https://github.com/rinshidvp/blinkbreak/compare/v0.6.0...v0.7.0
 [0.6.0]: https://github.com/rinshidvp/blinkbreak/compare/v0.5.0...v0.6.0
 [0.5.0]: https://github.com/rinshidvp/blinkbreak/compare/v0.4.0...v0.5.0
 [0.4.0]: https://github.com/rinshidvp/blinkbreak/compare/v0.3.0...v0.4.0
