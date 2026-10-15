@@ -11,7 +11,9 @@ All notable changes to BlinkBreak are listed here. The format follows
   separate Start and End preview buttons. All sounds are synthesized offline.
 - An optional **End-of-break cue** when the countdown naturally finishes, so you can
   look away without watching the timer. Manual completion, dismissal, and snoozing
-  stay silent; blink reminders always stay silent.
+  stay silent.
+- A quieter, single-note cue when a blink reminder appears, plus a Blink preview
+  button. It follows the existing sound setting and volume and has no end cue.
 
 ### Changed
 - The optional break chime now lives in Settings → Sound. Existing sound and reminder

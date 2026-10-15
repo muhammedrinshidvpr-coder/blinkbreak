@@ -1,6 +1,6 @@
 import type { SoundTone } from './types';
 
-export type SoundCue = 'start' | 'end';
+export type SoundCue = 'start' | 'end' | 'blink';
 
 const VOICES: Record<SoundTone, { frequency: number; attack: number; decay: number; partials: readonly [number, number][] }> = {
   bell: { frequency: 523.25, attack: 0.018, decay: 0.95, partials: [[1, 0.7], [2.76, 0.12]] },
@@ -26,23 +26,25 @@ function fadePrevious(ctx: AudioContext) {
 function schedule(ctx: AudioContext, volume: number, tone: SoundTone, cue: SoundCue) {
   const profile = VOICES[tone];
   const gain = ctx.createGain();
-  gain.gain.value = volume * 0.18;
+  gain.gain.value = volume * 0.18 * (cue === 'blink' ? 0.55 : 1);
   gain.connect(ctx.destination);
   const playing = { gain, sources: [] as OscillatorNode[] };
   active = playing;
-  const notes = cue === 'start' ? [1, 1.5] : [1.5, 1];
+  const notes = cue === 'blink' ? [1] : cue === 'start' ? [1, 1.5] : [1.5, 1];
+  const attack = cue === 'blink' ? Math.min(profile.attack, 0.012) : profile.attack;
+  const decay = cue === 'blink' ? Math.min(profile.decay, 0.18) : profile.decay;
   let remaining = notes.length * profile.partials.length;
 
   notes.forEach((note, index) => {
     for (const [ratio, level] of profile.partials) {
       const start = ctx.currentTime + 0.01 + index * 0.18;
-      const end = start + profile.attack + profile.decay;
+      const end = start + attack + decay;
       const source = ctx.createOscillator();
       const envelope = ctx.createGain();
       source.type = 'sine';
       source.frequency.value = profile.frequency * note * ratio;
       envelope.gain.setValueAtTime(0.0001, start);
-      envelope.gain.exponentialRampToValueAtTime(level, start + profile.attack);
+      envelope.gain.exponentialRampToValueAtTime(level, start + attack);
       envelope.gain.exponentialRampToValueAtTime(0.0001, end);
       source.connect(envelope).connect(gain);
       source.onended = () => {

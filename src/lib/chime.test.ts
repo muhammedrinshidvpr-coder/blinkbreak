@@ -5,6 +5,26 @@ beforeEach(() => vi.resetModules());
 afterEach(() => vi.unstubAllGlobals());
 
 describe('offline sound playback', () => {
+  it.each(['bell', 'wood', 'air'] as const)('makes the %s blink cue a single, quieter note lasting about 0.2 seconds', async (tone) => {
+    const audio = installAudioBoundary();
+    const { playChime } = await import('./chime');
+    playChime(0.4, tone, 'start');
+    await Promise.resolve();
+    const count = audio.oscillators.length;
+    const startGain = audio.gains[0].gain.value;
+    playChime(0.4, tone, 'blink');
+    await Promise.resolve();
+    const blink = audio.oscillators.slice(count);
+    expect(blink).toHaveLength(count / 2);
+    expect(blink[0].frequency.value).toBe(audio.oscillators[0].frequency.value);
+    const master = audio.gains.slice().reverse().find((gain) => gain.gain.value > 0);
+    expect(master?.gain.value).toBeCloseTo(startGain * 0.55);
+    for (const oscillator of blink) {
+      expect(oscillator.start).toHaveBeenCalledExactlyOnceWith(0.01);
+      expect(oscillator.stop.mock.calls[0][0]).toBeLessThanOrEqual(0.212);
+    }
+  });
+
   it.each(['bell', 'wood', 'air'] as const)('plays a soft %s start and a distinct descending end, at the requested volume', async (tone) => {
     const audio = installAudioBoundary();
     const { playChime } = await import('./chime');

@@ -107,13 +107,17 @@ describe('appearance setting', () => {
 });
 
 describe('chime policy', () => {
-  it('chimes only for big breaks, and only when switched on', () => {
+  it('chimes on enabled reminder starts, but never at the end of a blink', () => {
     const off = { sound: { ...DEFAULT_SETTINGS.sound, enabled: false } };
     const on = { sound: { ...DEFAULT_SETTINGS.sound, enabled: true } };
     expect(chimeFor('lookaway', off)).toBe(false);
     expect(chimeFor('rest', on)).toBe(true);
     expect(chimeFor('posture', on)).toBe(true);
-    expect(chimeFor('blink', on)).toBe(false);
+    expect(chimeFor('blink', on)).toBe(true);
+    expect(chimeFor('blink', off)).toBe(false);
+    expect(chimeFor('blink', on, 'end')).toBe(false);
+    expect(chimeFor('lookaway', on, 'end')).toBe(true);
+    expect(chimeFor('rest', off, 'end')).toBe(false);
   });
 });
 

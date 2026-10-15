@@ -329,7 +329,7 @@ button { font: inherit; color: inherit; }
 .bb-volume::-moz-range-track { height: 4px; background: transparent; }
 .bb-volume::-moz-range-thumb { width: 10px; height: 10px; border: 2px solid var(--bb-surface-solid); border-radius: 50%; background: var(--bb-accent-text); }
 .bb-volume:focus-visible { outline: 2px solid var(--bb-accent-text); outline-offset: 2px; }
-.bb-sound-previews { display: flex; align-items: center; gap: 8px; }
+.bb-sound-previews { display: flex; align-items: center; flex-wrap: wrap; gap: 8px; }
 .bb-sound-previews > span { margin-right: auto; font-size: 12px; color: var(--bb-secondary); }
 .bb-sound-previews .bb-btn { min-height: 32px; padding: 6px 12px; font-size: 12px; }
 .bb-sound-previews .bb-btn span { color: var(--bb-accent-text); margin-right: 5px; }

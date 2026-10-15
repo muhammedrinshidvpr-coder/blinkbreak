@@ -76,11 +76,12 @@ BlinkBreak follows your system appearance by default. Choose **Settings → Appe
 
 In **Settings → Sound**, optionally enable a soft cue when a break begins. Choose
 **Soft bell**, **Wooden tap**, or **Airy tone**, adjust the volume, and use **Start**
-and **End** to preview both cues—even while automatic sounds are off.
+and **End** to preview both cues—even while automatic sounds are off. **Blink**
+previews the softer, single-note cue used when a blink reminder appears.
 
 The optional **End-of-break cue** tells you when the countdown ends, so you can
 look away without watching the timer. Done, Later, and dismissing a break do not
-play this cue. Blink reminders always stay silent. Sound is off by default, works
+play this cue. Blink reminders have a short start cue only, never an end sound. Sound is off by default, works
 offline, and follows the existing reminder schedule and quiet hours.
 
 ## Install

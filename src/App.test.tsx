@@ -131,6 +131,38 @@ describe('App reminder orchestration', () => {
     expect(native.showNativeReminder).toHaveBeenCalledWith(expect.objectContaining({ chime: true, tone: 'air', volume: 0.17, endChime: false }));
   });
 
+  it('requests a native blink start cue without requesting an end cue', async () => {
+    const settings = cloneSettings(DEFAULT_SETTINGS);
+    settings.sound.enabled = true;
+    settings.strictMode = true;
+    settings.reminders.blink.intervalSec = 60;
+    localStorage.setItem('blinkbreak.settings.v1', JSON.stringify(settings));
+    render(<App />);
+    await flushPoll();
+    expect(native.showNativeReminder).toHaveBeenCalledWith(expect.objectContaining({ kind: 'blink', chime: true, endChime: false }));
+  });
+
+  it('plays the short blink cue in the local presentation path without an expiry sound', async () => {
+    vi.resetModules();
+    const { default: LocalApp } = await import('./App');
+    native.runtime = false;
+    const audio = installAudioBoundary();
+    const settings = cloneSettings(DEFAULT_SETTINGS);
+    settings.sound.enabled = true;
+    settings.reminders.blink.intervalSec = 60;
+    settings.reminders.blink.durationSec = 5;
+    localStorage.setItem('blinkbreak.settings.v1', JSON.stringify(settings));
+    render(<LocalApp />);
+    await flushPoll();
+    expect(screen.getByTestId('blink-toast')).toBeInTheDocument();
+    expect(audio.oscillators).toHaveLength(2);
+    expect(audio.gains[0].gain.value).toBeCloseTo(0.4 * 0.18 * 0.55);
+    await act(async () => vi.advanceTimersByTimeAsync(5_000));
+    await act(async () => vi.advanceTimersByTimeAsync(250));
+    expect(screen.queryByTestId('blink-toast')).not.toBeInTheDocument();
+    expect(audio.oscillators).toHaveLength(2);
+  });
+
   it('shows a due break over a fullscreen app in strict mode', async () => {
     const settings = cloneSettings(DEFAULT_SETTINGS);
     settings.strictMode = true;

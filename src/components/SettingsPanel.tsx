@@ -179,7 +179,7 @@ export function SettingsPanel({
         ))}
       </Group>
 
-      <Group title="Sound" note={<p className="bb-note">Blink reminders stay silent. Previews work even when reminder sounds are off.</p>}>
+      <Group title="Sound" note={<p className="bb-note">Blink uses a softer, single-note start cue with no end sound. Previews work even when reminder sounds are off.</p>}>
         <label className="bb-item">
           <span className="bb-setting-copy">Gentle reminder sounds<small>A soft invitation, never an alarm.</small></span>
           <Switch label="Gentle reminder sounds" testId="settings-chime" checked={settings.sound.enabled}
@@ -212,7 +212,11 @@ export function SettingsPanel({
             aria-valuetext={`${Math.round(settings.sound.volume * 100)} percent`}
             onChange={(e) => { const volume = Number(e.target.value) / 100; set((s) => { s.sound.volume = volume; }); }} />
           <div className="bb-sound-previews" role="group" aria-label="Preview sounds">
-            <span>Take a listen</span>
+            <span>Preview</span>
+            <button className="bb-btn" type="button" data-testid="settings-preview-blink"
+              aria-label="Preview blink sound" onClick={() => playChime(settings.sound.volume, settings.sound.tone, 'blink')}>
+              <span aria-hidden="true">·</span> Blink
+            </button>
             <button className="bb-btn" type="button" data-testid="settings-preview-start"
               aria-label="Preview start sound" onClick={() => playChime(settings.sound.volume, settings.sound.tone, 'start')}>
               <span aria-hidden="true">↗</span> Start

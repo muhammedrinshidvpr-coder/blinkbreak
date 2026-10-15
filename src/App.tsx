@@ -145,7 +145,9 @@ export default function App() {
       }
 
       const showLocal = () => {
-        if (chimeFor(reminder.kind, settings)) playChime(settings.sound.volume, settings.sound.tone);
+        if (chimeFor(reminder.kind, settings)) {
+          playChime(settings.sound.volume, settings.sound.tone, reminder.kind === 'blink' ? 'blink' : 'start');
+        }
         reminderVisibleRef.current = true;
         setActiveReminder({ kind: reminder.kind });
       };
@@ -167,7 +169,7 @@ export default function App() {
             chime: chimeFor(reminder.kind, settings),
             volume: settings.sound.volume,
             tone: settings.sound.tone,
-            endChime: chimeFor(reminder.kind, settings) && settings.sound.endCue,
+            endChime: chimeFor(reminder.kind, settings, 'end') && settings.sound.endCue,
             overFullscreen: strict,
           });
         } catch {
@@ -331,7 +333,7 @@ export default function App() {
           reducedMotion={reducedMotion}
           onAction={handleAction}
           onTimerEnd={() => {
-            if (chimeFor(activeReminder.kind, settings) && settings.sound.endCue) {
+            if (chimeFor(activeReminder.kind, settings, 'end') && settings.sound.endCue) {
               playChime(settings.sound.volume, settings.sound.tone, 'end');
             }
           }}

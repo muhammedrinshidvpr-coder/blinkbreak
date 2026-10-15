@@ -17,7 +17,7 @@ export function NativeReminder() {
     let cancelled = false;
     void listen<ReminderPayload>('blinkbreak:reminder', (next) => {
       if (!cancelled) {
-        if (next.presentation === 'overlay' && next.chime) playChime(next.volume, next.tone);
+        if (next.chime) playChime(next.volume, next.tone, next.kind === 'blink' ? 'blink' : 'start');
         setReminder((current) => ({ payload: next, sequence: (current?.sequence ?? 0) + 1 }));
       }
     }).then((cleanup) => {

@@ -63,9 +63,9 @@ export function expiryActionFor(kind: ReminderKind): 'done' | 'skip' {
   return kind === 'blink' || kind === 'lookaway' ? 'done' : 'skip';
 }
 
-/** The optional chime is for the big breaks only; a sound every 5 minutes for blink would grate. */
-export function chimeFor(kind: ReminderKind, settings: Pick<AppSettings, 'sound'>): boolean {
-  return settings.sound.enabled && presentationFor(kind) === 'overlay';
+/** Blink gets a tiny start cue, never an end cue. All automatic audio remains opt-in. */
+export function chimeFor(kind: ReminderKind, settings: Pick<AppSettings, 'sound'>, cue: 'start' | 'end' = 'start'): boolean {
+  return settings.sound.enabled && (cue === 'start' || kind !== 'blink');
 }
 
 /** Compact duration label: 45s, 5m, 1h 30m. */
