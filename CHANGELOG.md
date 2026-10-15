@@ -12,12 +12,15 @@ All notable changes to BlinkBreak are listed here. The format follows
 - An optional **End-of-break cue** when the countdown naturally finishes, so you can
   look away without watching the timer. Manual completion, dismissal, and snoozing
   stay silent.
-- A quieter, single-note cue when a blink reminder appears, plus a Blink preview
+- A brief, clear single-note cue when a blink reminder appears, plus a Blink preview
   button. It follows the existing sound setting and volume and has no end cue.
 
 ### Changed
 - The optional break chime now lives in Settings → Sound. Existing sound and reminder
   preferences are preserved; sound remains off by default.
+- Blink cues have a stronger output and a short held note so they are easier to
+  notice on laptop speakers. The volume slider still controls them; other break
+  sounds keep their original level.
 
 ## [0.6.0] - 2026-10-10
 

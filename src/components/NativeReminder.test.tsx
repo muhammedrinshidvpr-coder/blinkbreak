@@ -75,12 +75,13 @@ describe('Native reminder sound', () => {
     expect(bridge.emit).toHaveBeenCalledWith('blinkbreak:reminder-action', { kind: 'lookaway', action: 'snooze' });
   });
 
-  it('plays a short, quieter cue when blink appears, and never an end cue', async () => {
+  it('plays a clearer blink cue when it appears, and never an end cue', async () => {
     const audio = installAudioBoundary();
     await show({ ...payload, kind: 'blink', presentation: 'toast' });
     expect(audio.oscillators).toHaveLength(2); // one wood note with two partials
-    expect(audio.gains[0].gain.value).toBeCloseTo(0.2 * 0.18 * 0.55);
-    expect(audio.oscillators[0].stop.mock.calls[0][0]).toBeLessThanOrEqual(0.212);
+    expect(audio.gains[0].gain.value).toBeCloseTo(0.2 * 0.54);
+    expect(audio.oscillators[0].stop.mock.calls[0][0]).toBeGreaterThanOrEqual(0.468);
+    expect(audio.oscillators[0].stop.mock.calls[0][0]).toBeLessThanOrEqual(0.472);
     await act(async () => vi.advanceTimersByTimeAsync(1_000));
     await act(async () => vi.advanceTimersByTimeAsync(200));
     expect(audio.oscillators).toHaveLength(2);

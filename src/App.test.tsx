@@ -156,7 +156,7 @@ describe('App reminder orchestration', () => {
     await flushPoll();
     expect(screen.getByTestId('blink-toast')).toBeInTheDocument();
     expect(audio.oscillators).toHaveLength(2);
-    expect(audio.gains[0].gain.value).toBeCloseTo(0.4 * 0.18 * 0.55);
+    expect(audio.gains[0].gain.value).toBeCloseTo(0.4 * 0.54);
     await act(async () => vi.advanceTimersByTimeAsync(5_000));
     await act(async () => vi.advanceTimersByTimeAsync(250));
     expect(screen.queryByTestId('blink-toast')).not.toBeInTheDocument();

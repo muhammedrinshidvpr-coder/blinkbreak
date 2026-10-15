@@ -5,7 +5,7 @@ beforeEach(() => vi.resetModules());
 afterEach(() => vi.unstubAllGlobals());
 
 describe('offline sound playback', () => {
-  it.each(['bell', 'wood', 'air'] as const)('makes the %s blink cue a single, quieter note lasting about 0.2 seconds', async (tone) => {
+  it.each(['bell', 'wood', 'air'] as const)('makes the %s blink cue one clearer note with a short hold and a longer decay', async (tone) => {
     const audio = installAudioBoundary();
     const { playChime } = await import('./chime');
     playChime(0.4, tone, 'start');
@@ -18,11 +18,37 @@ describe('offline sound playback', () => {
     expect(blink).toHaveLength(count / 2);
     expect(blink[0].frequency.value).toBe(audio.oscillators[0].frequency.value);
     const master = audio.gains.slice().reverse().find((gain) => gain.gain.value > 0);
-    expect(master?.gain.value).toBeCloseTo(startGain * 0.55);
+    expect(master?.gain.value).toBeCloseTo(startGain * 3);
     for (const oscillator of blink) {
       expect(oscillator.start).toHaveBeenCalledExactlyOnceWith(0.01);
-      expect(oscillator.stop.mock.calls[0][0]).toBeLessThanOrEqual(0.212);
+      expect(oscillator.stop.mock.calls[0][0]).toBeGreaterThanOrEqual(0.468);
+      expect(oscillator.stop.mock.calls[0][0]).toBeLessThanOrEqual(0.472);
     }
+    const blinkEnvelopes = audio.gains.slice(count + 2);
+    expect(blinkEnvelopes).toHaveLength(blink.length);
+    for (const envelope of blinkEnvelopes) {
+      const [peak, peakAt] = envelope.gain.exponentialRampToValueAtTime.mock.calls[0];
+      expect(envelope.gain.setValueAtTime).toHaveBeenCalledWith(peak, peakAt + 0.06);
+    }
+  });
+
+  it('offers a stronger full-volume blink without changing other cues or losing slider control', async () => {
+    const audio = installAudioBoundary();
+    const { playChime } = await import('./chime');
+    for (const volume of [0.25, 0.5, 1, 2]) {
+      const offset = audio.gains.length;
+      playChime(volume, 'bell', 'blink');
+      await Promise.resolve();
+      expect(audio.gains[offset].gain.value).toBeCloseTo(Math.min(1, volume) * 0.54);
+    }
+    const offset = audio.gains.length;
+    playChime(1, 'bell', 'start');
+    await Promise.resolve();
+    expect(audio.gains[offset].gain.value).toBeCloseTo(0.18);
+    playChime(0, 'bell', 'blink');
+    const count = audio.oscillators.length;
+    await Promise.resolve();
+    expect(audio.oscillators).toHaveLength(count);
   });
 
   it.each(['bell', 'wood', 'air'] as const)('plays a soft %s start and a distinct descending end, at the requested volume', async (tone) => {

@@ -23,7 +23,7 @@ describe('Sound settings', () => {
     await act(async () => fireEvent.click(screen.getByRole('button', { name: 'Preview blink sound' })));
     expect(audio.oscillators).toHaveLength(3); // one airy note, not the two-note break cue
     expect(audio.oscillators[0].frequency.value).toBe(440);
-    expect(audio.gains[0].gain.value).toBeCloseTo(0.108 * 0.55);
+    expect(audio.gains[0].gain.value).toBeCloseTo(0.6 * 0.54);
     const blinkCount = audio.oscillators.length;
     await act(async () => fireEvent.click(screen.getByRole('button', { name: 'Preview start sound' })));
     expect(audio.oscillators[blinkCount].frequency.value).toBe(440);

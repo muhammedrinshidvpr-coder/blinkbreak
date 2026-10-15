@@ -26,25 +26,29 @@ function fadePrevious(ctx: AudioContext) {
 function schedule(ctx: AudioContext, volume: number, tone: SoundTone, cue: SoundCue) {
   const profile = VOICES[tone];
   const gain = ctx.createGain();
-  gain.gain.value = volume * 0.18 * (cue === 'blink' ? 0.55 : 1);
+  // Blink must be noticeable on laptop speakers. Its single note still leaves
+  // peak headroom at full volume; the other break cues retain their soft level.
+  gain.gain.value = volume * (cue === 'blink' ? 0.54 : 0.18);
   gain.connect(ctx.destination);
   const playing = { gain, sources: [] as OscillatorNode[] };
   active = playing;
   const notes = cue === 'blink' ? [1] : cue === 'start' ? [1, 1.5] : [1.5, 1];
   const attack = cue === 'blink' ? Math.min(profile.attack, 0.012) : profile.attack;
-  const decay = cue === 'blink' ? Math.min(profile.decay, 0.18) : profile.decay;
+  const hold = cue === 'blink' ? 0.06 : 0;
+  const decay = cue === 'blink' ? 0.38 : profile.decay;
   let remaining = notes.length * profile.partials.length;
 
   notes.forEach((note, index) => {
     for (const [ratio, level] of profile.partials) {
       const start = ctx.currentTime + 0.01 + index * 0.18;
-      const end = start + attack + decay;
+      const end = start + attack + hold + decay;
       const source = ctx.createOscillator();
       const envelope = ctx.createGain();
       source.type = 'sine';
       source.frequency.value = profile.frequency * note * ratio;
       envelope.gain.setValueAtTime(0.0001, start);
       envelope.gain.exponentialRampToValueAtTime(level, start + attack);
+      if (hold > 0) envelope.gain.setValueAtTime(level, start + attack + hold);
       envelope.gain.exponentialRampToValueAtTime(0.0001, end);
       source.connect(envelope).connect(gain);
       source.onended = () => {

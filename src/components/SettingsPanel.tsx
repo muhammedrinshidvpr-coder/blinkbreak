@@ -179,7 +179,7 @@ export function SettingsPanel({
         ))}
       </Group>
 
-      <Group title="Sound" note={<p className="bb-note">Blink uses a softer, single-note start cue with no end sound. Previews work even when reminder sounds are off.</p>}>
+      <Group title="Sound" note={<p className="bb-note">Blink uses a brief, clear single-note start cue with no end sound. Previews work even when reminder sounds are off.</p>}>
         <label className="bb-item">
           <span className="bb-setting-copy">Gentle reminder sounds<small>A soft invitation, never an alarm.</small></span>
           <Switch label="Gentle reminder sounds" testId="settings-chime" checked={settings.sound.enabled}
