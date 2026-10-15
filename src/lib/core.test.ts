@@ -1,6 +1,6 @@
 import { describe, it, expect } from 'vitest';
 import { classifyActivity } from './activity';
-import { chimeFor, sanitizeSettings, validateSettings, DEFAULT_SETTINGS } from './types';
+import { chimeFor, cloneSettings, sanitizeSettings, validateSettings, DEFAULT_SETTINGS } from './types';
 
 describe('activity', () => {
   it('first sample counts nothing', () => {
@@ -108,11 +108,30 @@ describe('appearance setting', () => {
 
 describe('chime policy', () => {
   it('chimes only for big breaks, and only when switched on', () => {
-    const off = { sound: { enabled: false, volume: 0.4 } };
-    const on = { sound: { enabled: true, volume: 0.4 } };
+    const off = { sound: { ...DEFAULT_SETTINGS.sound, enabled: false } };
+    const on = { sound: { ...DEFAULT_SETTINGS.sound, enabled: true } };
     expect(chimeFor('lookaway', off)).toBe(false);
     expect(chimeFor('rest', on)).toBe(true);
     expect(chimeFor('posture', on)).toBe(true);
     expect(chimeFor('blink', on)).toBe(false);
+  });
+});
+
+describe('sound settings migration', () => {
+  it('keeps existing sound and reminder choices while adding the new controls', () => {
+    const saved = { ...cloneSettings(DEFAULT_SETTINGS), sound: { enabled: true, volume: 0.23 } };
+    saved.reminders.lookaway.intervalSec = 900;
+    const migrated = sanitizeSettings(saved);
+    expect(migrated.sound).toEqual({ enabled: true, volume: 0.23, tone: 'bell', endCue: true });
+    expect(migrated.reminders.lookaway.intervalSec).toBe(900);
+  });
+
+  it.each([null, {}, { enabled: 'yes', volume: NaN, tone: 'alarm', endCue: 1 }])('safely defaults malformed sound settings: %j', (sound) => {
+    expect(sanitizeSettings({ ...cloneSettings(DEFAULT_SETTINGS), sound }).sound).toEqual(DEFAULT_SETTINGS.sound);
+  });
+
+  it.each([[-1, 0], [2, 1], [0, 0]])('clamps stored volume %s to %s', (volume, expected) => {
+    const sound = { enabled: true, volume, tone: 'wood', endCue: false };
+    expect(sanitizeSettings({ ...cloneSettings(DEFAULT_SETTINGS), sound }).sound).toEqual({ ...sound, volume: expected });
   });
 });

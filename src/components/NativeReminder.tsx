@@ -17,7 +17,7 @@ export function NativeReminder() {
     let cancelled = false;
     void listen<ReminderPayload>('blinkbreak:reminder', (next) => {
       if (!cancelled) {
-        if (next.chime) playChime(next.volume);
+        if (next.presentation === 'overlay' && next.chime) playChime(next.volume, next.tone);
         setReminder((current) => ({ payload: next, sequence: (current?.sequence ?? 0) + 1 }));
       }
     }).then((cleanup) => {
@@ -67,6 +67,9 @@ export function NativeReminder() {
           reducedMotion={payload.reducedMotion}
           onAction={action}
           manageFocus={false}
+          onTimerEnd={() => {
+            if (payload.endChime) playChime(payload.volume, payload.tone, 'end');
+          }}
         />
       )}
     </main>

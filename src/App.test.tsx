@@ -1,8 +1,10 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { act, cleanup, fireEvent, render, screen } from '@testing-library/react';
 import { cloneSettings, DEFAULT_SETTINGS } from './lib/types';
+import { installAudioBoundary } from './test/audio';
 
 const native = vi.hoisted(() => ({
+  runtime: true,
   fullscreen: true,
   platformCapabilities: { platform: 'windows', idle_supported: true, fullscreen_supported: true, over_fullscreen_supported: true } as {
     platform: string;
@@ -27,7 +29,7 @@ vi.mock('./lib/native', () => ({
   getWindowLabel: vi.fn(async () => 'main'),
   hideNativeReminder: vi.fn(async () => undefined),
   isFullscreenActive: native.isFullscreenActive,
-  isTauriRuntime: () => true,
+  isTauriRuntime: () => native.runtime,
   listen: vi.fn(async () => () => undefined),
   setAutostartEnabled: native.setAutostartEnabled,
   showNativeReminder: native.showNativeReminder,
@@ -50,6 +52,7 @@ describe('App reminder orchestration', () => {
     vi.useFakeTimers();
     vi.setSystemTime(new Date(2026, 8, 30, 9, 0, 0));
     localStorage.clear();
+    native.runtime = true;
     native.fullscreen = true;
     native.platformCapabilities = { platform: 'windows', idle_supported: true, fullscreen_supported: true, over_fullscreen_supported: true };
     native.showNativeReminder.mockClear();
@@ -61,6 +64,7 @@ describe('App reminder orchestration', () => {
   afterEach(() => {
     cleanup();
     vi.unstubAllEnvs();
+    vi.unstubAllGlobals();
     vi.useRealTimers();
     localStorage.clear();
   });
@@ -84,6 +88,47 @@ describe('App reminder orchestration', () => {
 
     expect(native.showNativeReminder).toHaveBeenCalledTimes(1);
     expect(native.showNativeReminder).toHaveBeenCalledWith(expect.objectContaining({ kind: 'posture', overFullscreen: false }));
+  });
+
+  it('saves sound controls and plays the selected start and timer-end cues through a real break', async () => {
+    native.runtime = false;
+    const audio = installAudioBoundary();
+    render(<App />);
+    await flushPoll();
+    fireEvent.click(screen.getByTestId('tab-settings'));
+    expect(screen.getByTestId('settings-chime')).not.toBeChecked();
+    expect(screen.getByTestId('settings-end-cue')).toBeDisabled();
+    fireEvent.click(screen.getByTestId('settings-chime'));
+    fireEvent.click(screen.getByRole('radio', { name: 'Wooden tap' }));
+    fireEvent.change(screen.getByRole('slider', { name: 'Volume' }), { target: { value: '25' } });
+    expect(screen.getByTestId('settings-volume-value')).toHaveTextContent('25%');
+    await flushPoll();
+    expect(audio.oscillators).toHaveLength(0); // editing controls is silent
+    expect(JSON.parse(localStorage.getItem('blinkbreak.settings.v1')!).sound).toEqual({ enabled: true, volume: 0.25, tone: 'wood', endCue: true });
+
+    fireEvent.click(screen.getByTestId('tab-today'));
+    fireEvent.click(screen.getByTestId('dash-break-now'));
+    await flushPoll();
+    expect(audio.oscillators[0].frequency.value).toBe(392);
+    expect(audio.gains[0].gain.value).toBeCloseTo(0.045);
+    const startCount = audio.oscillators.length;
+    await act(async () => vi.advanceTimersByTimeAsync(20_000));
+    expect(audio.oscillators).toHaveLength(startCount * 2);
+    expect(audio.oscillators[startCount].frequency.value).toBe(588);
+    await act(async () => vi.advanceTimersByTimeAsync(250));
+    expect(screen.queryByTestId('reminder-overlay')).not.toBeInTheDocument();
+    expect(JSON.parse(localStorage.getItem('blinkbreak.stats.v1')!).completed.lookaway).toBe(1);
+  });
+
+  it('sends current sound settings to the native window rather than its startup copy', async () => {
+    const settings = cloneSettings(DEFAULT_SETTINGS);
+    settings.sound = { enabled: true, volume: 0.17, tone: 'air', endCue: false };
+    localStorage.setItem('blinkbreak.settings.v1', JSON.stringify(settings));
+    render(<App />);
+    await flushPoll();
+    fireEvent.click(screen.getByTestId('dash-break-now'));
+    await flushPoll();
+    expect(native.showNativeReminder).toHaveBeenCalledWith(expect.objectContaining({ chime: true, tone: 'air', volume: 0.17, endChime: false }));
   });
 
   it('shows a due break over a fullscreen app in strict mode', async () => {

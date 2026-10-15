@@ -1,39 +1,84 @@
-/**
- * Soft two-note chime synthesized with Web Audio (no audio file to ship or load).
- * CONTRACT:
- * - GUARANTEES: never throws; a missing or blocked AudioContext means silence.
- * - DOES NOT: decide when to chime (see `chimeFor` in types.ts).
- */
-const NOTES = [
-  { freq: 659.25, at: 0 }, // E5
-  { freq: 987.77, at: 0.12 }, // B5
-];
+import type { SoundTone } from './types';
+
+export type SoundCue = 'start' | 'end';
+
+const VOICES: Record<SoundTone, { frequency: number; attack: number; decay: number; partials: readonly [number, number][] }> = {
+  bell: { frequency: 523.25, attack: 0.018, decay: 0.95, partials: [[1, 0.7], [2.76, 0.12]] },
+  wood: { frequency: 392, attack: 0.008, decay: 0.22, partials: [[1, 0.8], [2.8, 0.2]] },
+  air: { frequency: 440, attack: 0.12, decay: 0.8, partials: [[1, 0.5], [1.006, 0.3], [2, 0.1]] },
+};
 
 let context: AudioContext | null = null;
+let request = 0;
+let active: { gain: GainNode; sources: OscillatorNode[] } | null = null;
 
-export function playChime(volume: number): void {
+function fadePrevious(ctx: AudioContext) {
+  if (!active) return;
+  const { gain, sources } = active;
+  const now = ctx.currentTime;
+  gain.gain.cancelScheduledValues(now);
+  gain.gain.setValueAtTime(gain.gain.value, now);
+  gain.gain.linearRampToValueAtTime(0, now + 0.025);
+  for (const source of sources) source.stop(now + 0.03);
+  active = null;
+}
+
+function schedule(ctx: AudioContext, volume: number, tone: SoundTone, cue: SoundCue) {
+  const profile = VOICES[tone];
+  const gain = ctx.createGain();
+  gain.gain.value = volume * 0.18;
+  gain.connect(ctx.destination);
+  const playing = { gain, sources: [] as OscillatorNode[] };
+  active = playing;
+  const notes = cue === 'start' ? [1, 1.5] : [1.5, 1];
+  let remaining = notes.length * profile.partials.length;
+
+  notes.forEach((note, index) => {
+    for (const [ratio, level] of profile.partials) {
+      const start = ctx.currentTime + 0.01 + index * 0.18;
+      const end = start + profile.attack + profile.decay;
+      const source = ctx.createOscillator();
+      const envelope = ctx.createGain();
+      source.type = 'sine';
+      source.frequency.value = profile.frequency * note * ratio;
+      envelope.gain.setValueAtTime(0.0001, start);
+      envelope.gain.exponentialRampToValueAtTime(level, start + profile.attack);
+      envelope.gain.exponentialRampToValueAtTime(0.0001, end);
+      source.connect(envelope).connect(gain);
+      source.onended = () => {
+        source.disconnect();
+        envelope.disconnect();
+        if (--remaining === 0) {
+          gain.disconnect();
+          if (active === playing) active = null;
+        }
+      };
+      playing.sources.push(source);
+      source.start(start);
+      source.stop(end + 0.01);
+    }
+  });
+}
+
+/**
+ * Offline, gentle cues. Never throws: unsupported or blocked audio means silence.
+ * Resume before scheduling; rapid previews replace one another instead of piling up.
+ * Policy (when to play) belongs to the caller, not the audio engine.
+ */
+export function playChime(volume: number, tone: SoundTone = 'bell', cue: SoundCue = 'start'): void {
+  const currentRequest = ++request;
   try {
+    if (context) fadePrevious(context);
+    if (!Number.isFinite(volume) || volume <= 0) return;
     const Ctx = window.AudioContext ?? (window as unknown as { webkitAudioContext?: typeof AudioContext }).webkitAudioContext;
     if (!Ctx) return;
-    context ??= new Ctx();
+    if (!context || context.state === 'closed') context = new Ctx();
     const ctx = context;
-    void ctx.resume().catch(() => undefined);
-    const peak = Math.min(1, Math.max(0, volume)) * 0.25;
-    for (const { freq, at } of NOTES) {
-      const start = ctx.currentTime + at;
-      const osc = ctx.createOscillator();
-      const gain = ctx.createGain();
-      osc.type = 'sine';
-      osc.frequency.value = freq;
-      // Quick soft attack, long bell-like decay.
-      gain.gain.setValueAtTime(0.0001, start);
-      gain.gain.exponentialRampToValueAtTime(peak, start + 0.02);
-      gain.gain.exponentialRampToValueAtTime(0.0001, start + 1.6);
-      osc.connect(gain).connect(ctx.destination);
-      osc.start(start);
-      osc.stop(start + 1.7);
-    }
+    void ctx.resume().then(() => {
+      if (currentRequest !== request || ctx.state !== 'running') return;
+      schedule(ctx, Math.min(1, volume), tone, cue);
+    }).catch(() => undefined);
   } catch {
-    // Audio is a nicety; never let it break a reminder.
+    // Sound must never prevent a reminder from showing or closing.
   }
 }

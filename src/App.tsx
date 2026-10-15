@@ -145,7 +145,7 @@ export default function App() {
       }
 
       const showLocal = () => {
-        if (chimeFor(reminder.kind, settings)) playChime(settings.sound.volume);
+        if (chimeFor(reminder.kind, settings)) playChime(settings.sound.volume, settings.sound.tone);
         reminderVisibleRef.current = true;
         setActiveReminder({ kind: reminder.kind });
       };
@@ -166,6 +166,8 @@ export default function App() {
             theme: resolvedTheme,
             chime: chimeFor(reminder.kind, settings),
             volume: settings.sound.volume,
+            tone: settings.sound.tone,
+            endChime: chimeFor(reminder.kind, settings) && settings.sound.endCue,
             overFullscreen: strict,
           });
         } catch {
@@ -328,6 +330,11 @@ export default function App() {
           snoozeSec={settings.reminders[activeReminder.kind].snoozeSec}
           reducedMotion={reducedMotion}
           onAction={handleAction}
+          onTimerEnd={() => {
+            if (chimeFor(activeReminder.kind, settings) && settings.sound.endCue) {
+              playChime(settings.sound.volume, settings.sound.tone, 'end');
+            }
+          }}
         />
       )}
 

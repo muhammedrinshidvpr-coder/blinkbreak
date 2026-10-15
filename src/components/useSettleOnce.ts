@@ -22,10 +22,11 @@ export function useSettleOnce(onAction: (action: CardAction) => void, reducedMot
   useEffect(() => () => window.clearTimeout(timerRef.current), []);
 
   const settle = (action: CardAction) => {
-    if (settledRef.current) return;
+    if (settledRef.current) return false;
     settledRef.current = true;
     setLeaving(true);
     timerRef.current = window.setTimeout(() => onActionRef.current(action), reducedMotion ? REDUCED_EXIT_MS : EXIT_MS);
+    return true;
   };
 
   return { leaving, settle };

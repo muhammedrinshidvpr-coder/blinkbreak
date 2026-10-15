@@ -29,6 +29,27 @@ afterEach(() => {
 });
 
 describe('OverlayReminder', () => {
+  it('signals natural expiry once even when the break is recorded as skipped', () => {
+    const onTimerEnd = vi.fn();
+    const onAction = vi.fn();
+    render(<OverlayReminder kind="rest" title="Rest" body="b" durationSec={1} snoozeSec={600} onAction={onAction} onTimerEnd={onTimerEnd} />);
+    act(() => vi.advanceTimersByTime(1_000));
+    expect(onTimerEnd).toHaveBeenCalledOnce();
+    act(() => vi.advanceTimersByTime(2_000));
+    expect(onTimerEnd).toHaveBeenCalledOnce();
+    expect(onAction).toHaveBeenCalledWith('skip');
+  });
+
+  it.each(['done', 'snooze', 'backdrop', 'escape'])('does not signal timer end after %s wins the expiry race', (action) => {
+    const onTimerEnd = vi.fn();
+    render(<OverlayReminder kind="lookaway" title="Look away" body="b" durationSec={1} snoozeSec={600} onAction={vi.fn()} onTimerEnd={onTimerEnd} />);
+    act(() => vi.advanceTimersByTime(900));
+    if (action === 'escape') fireEvent.keyDown(window, { key: 'Escape' });
+    else fireEvent.click(screen.getByTestId(action === 'backdrop' ? 'reminder-overlay' : `reminder-${action}`));
+    act(() => vi.advanceTimersByTime(1_000));
+    expect(onTimerEnd).not.toHaveBeenCalled();
+  });
+
   it('closes by itself when the countdown ends, after the exit animation', () => {
     const onAction = renderOverlay({ durationSec: 2 });
 

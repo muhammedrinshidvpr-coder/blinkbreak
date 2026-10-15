@@ -1,4 +1,4 @@
-import type { ReminderPresentation, ResolvedTheme } from './types';
+import type { ReminderPresentation, ResolvedTheme, SoundTone } from './types';
 
 export interface ReminderPayload {
   kind: string;
@@ -16,6 +16,9 @@ export interface ReminderPayload {
   chime: boolean;
   /** Chime level 0..1. */
   volume: number;
+  tone: SoundTone;
+  /** Natural countdown expiry only, independent of the recorded expiry action. */
+  endChime: boolean;
   /** Strict mode: raise the reminder above fullscreen apps where the OS allows it. */
   overFullscreen: boolean;
 }

@@ -6,6 +6,17 @@ All notable changes to BlinkBreak are listed here. The format follows
 
 ## [Unreleased]
 
+### Added
+- **Sound** settings with Soft bell, Wooden tap, and Airy tone, a volume slider, and
+  separate Start and End preview buttons. All sounds are synthesized offline.
+- An optional **End-of-break cue** when the countdown naturally finishes, so you can
+  look away without watching the timer. Manual completion, dismissal, and snoozing
+  stay silent; blink reminders always stay silent.
+
+### Changed
+- The optional break chime now lives in Settings → Sound. Existing sound and reminder
+  preferences are preserved; sound remains off by default.
+
 ## [0.6.0] - 2026-10-10
 
 Strict mode: breaks that don't wait for fullscreen apps.

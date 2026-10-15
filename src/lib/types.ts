@@ -5,6 +5,14 @@
 
 export type ReminderKind = 'blink' | 'lookaway' | 'posture' | 'move' | 'rest';
 
+export type SoundTone = 'bell' | 'wood' | 'air';
+export interface SoundSettings {
+  enabled: boolean;
+  volume: number;
+  tone: SoundTone;
+  endCue: boolean;
+}
+
 export interface ReminderDefinition {
   kind: ReminderKind;
   /** Human label shown in UI */
@@ -25,7 +33,7 @@ export interface AppSettings {
   /** Seconds of no input before timers pause */
   idleThresholdSec: number;
   quietHours: { enabled: boolean; start: string; end: string };
-  sound: { enabled: boolean; volume: number };
+  sound: SoundSettings;
   reducedMotion: boolean;
   /** Appearance: follow the system, or force light/dark. */
   theme: ThemeSetting;
@@ -105,7 +113,7 @@ export const DEFAULT_SETTINGS: AppSettings = {
   },
   idleThresholdSec: 60,
   quietHours: { enabled: false, start: '22:00', end: '08:00' },
-  sound: { enabled: false, volume: 0.4 },
+  sound: { enabled: false, volume: 0.4, tone: 'bell', endCue: true },
   reducedMotion: false,
   theme: 'system',
   autostart: true,
@@ -150,6 +158,15 @@ export function sanitizeSettings(raw: unknown): AppSettings {
   if (problems.length > 0) return fallback;
   const merged = { ...fallback, ...(raw as Partial<AppSettings>) };
   merged.reminders = { ...fallback.reminders, ...((raw as AppSettings).reminders ?? {}) };
+  const sound = (raw as { sound?: Partial<SoundSettings> | null }).sound;
+  merged.sound = {
+    enabled: typeof sound?.enabled === 'boolean' ? sound.enabled : fallback.sound.enabled,
+    volume: typeof sound?.volume === 'number' && Number.isFinite(sound.volume)
+      ? Math.min(1, Math.max(0, sound.volume)) : fallback.sound.volume,
+    tone: sound?.tone === 'bell' || sound?.tone === 'wood' || sound?.tone === 'air'
+      ? sound.tone : fallback.sound.tone,
+    endCue: typeof sound?.endCue === 'boolean' ? sound.endCue : fallback.sound.endCue,
+  };
   if (!['system', 'light', 'dark'].includes(merged.theme)) merged.theme = 'system';
   // 0.5 and older stored the inverse as `fullscreenDefer`, which Settings never exposed.
   const legacy = raw as { fullscreenDefer?: unknown; strictMode?: unknown };

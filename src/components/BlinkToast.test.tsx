@@ -76,7 +76,7 @@ describe('NativeReminder routing', () => {
     render(<Routed />);
     await act(async () => {});
 
-    const base = { title: 't', body: 'b', durationSec: 10, snoozeSec: 600, reducedMotion: false, theme: 'dark', chime: false, volume: 0.4 };
+    const base = { title: 't', body: 'b', durationSec: 10, snoozeSec: 600, reducedMotion: false, theme: 'dark', chime: false, volume: 0.4, tone: 'bell', endChime: false };
     act(() => handlers[0]({ ...base, kind: 'blink', presentation: 'toast', expiryAction: 'done' }));
     expect(screen.getByTestId('blink-toast')).toBeInTheDocument();
     expect(screen.queryByTestId('reminder-overlay')).not.toBeInTheDocument();

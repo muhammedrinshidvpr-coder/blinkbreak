@@ -1,9 +1,14 @@
-import { useEffect, useState, type ReactNode } from 'react';
-import type { AppSettings, ReminderKind, ThemeSetting } from '../lib/types';
+import { useEffect, useState, type CSSProperties, type ReactNode } from 'react';
+import type { AppSettings, ReminderKind, SoundTone, ThemeSetting } from '../lib/types';
 import { SegmentedControl } from './SegmentedControl';
 import { playChime } from '../lib/chime';
 
 const KINDS: ReminderKind[] = ['blink', 'lookaway', 'posture', 'move', 'rest'];
+const TONES: { id: SoundTone; label: string; detail: string; bars: readonly number[] }[] = [
+  { id: 'bell', label: 'Soft bell', detail: 'Warm & rounded', bars: [10, 22, 30, 20, 12] },
+  { id: 'wood', label: 'Wooden tap', detail: 'Short & grounded', bars: [8, 28, 16, 10, 6] },
+  { id: 'air', label: 'Airy tone', detail: 'Light & spacious', bars: [12, 18, 24, 22, 16] },
+];
 const THEMES: { id: ThemeSetting; label: string }[] = [
   { id: 'system', label: 'System' },
   { id: 'light', label: 'Light' },
@@ -172,17 +177,56 @@ export function SettingsPanel({
             </span>
           </div>
         ))}
+      </Group>
+
+      <Group title="Sound" note={<p className="bb-note">Blink reminders stay silent. Previews work even when reminder sounds are off.</p>}>
         <label className="bb-item">
-          <span>Soft chime on breaks</span>
-          <Switch
-            label="Soft chime on breaks"
-            testId="settings-chime"
-            checked={settings.sound.enabled}
-            onChange={(v) => {
-              set((s) => { s.sound.enabled = v; });
-              if (v) playChime(settings.sound.volume); // let people hear what they turned on
-            }}
-          />
+          <span className="bb-setting-copy">Gentle reminder sounds<small>A soft invitation, never an alarm.</small></span>
+          <Switch label="Gentle reminder sounds" testId="settings-chime" checked={settings.sound.enabled}
+            onChange={(v) => set((s) => { s.sound.enabled = v; })} />
+        </label>
+        <div className="bb-sound-studio">
+          <fieldset className="bb-tone-picker">
+            <legend>Sound character</legend>
+            <div className="bb-tone-options">
+              {TONES.map((tone) => (
+                <label className={`bb-tone ${settings.sound.tone === tone.id ? 'is-selected' : ''}`} key={tone.id}>
+                  <input type="radio" name="sound-tone" value={tone.id} aria-label={tone.label}
+                    data-testid={`settings-tone-${tone.id}`} checked={settings.sound.tone === tone.id}
+                    onChange={() => set((s) => { s.sound.tone = tone.id; })} />
+                  <span className="bb-tone-check" aria-hidden="true">{settings.sound.tone === tone.id ? '✓' : ''}</span>
+                  <span className="bb-tone-wave" aria-hidden="true">{tone.bars.map((height, i) => <i key={i} style={{ height }} />)}</span>
+                  <span className="bb-tone-label">{tone.label}</span>
+                  <span className="bb-tone-detail">{tone.detail}</span>
+                </label>
+              ))}
+            </div>
+          </fieldset>
+          <div className="bb-volume-heading">
+            <label htmlFor="sound-volume">Volume</label>
+            <output htmlFor="sound-volume" data-testid="settings-volume-value">{Math.round(settings.sound.volume * 100)}%</output>
+          </div>
+          <input id="sound-volume" className="bb-volume" type="range" min="0" max="100" step="1"
+            style={{ '--sound-volume': `${settings.sound.volume * 100}%` } as CSSProperties}
+            data-testid="settings-volume" value={Math.round(settings.sound.volume * 100)}
+            aria-valuetext={`${Math.round(settings.sound.volume * 100)} percent`}
+            onChange={(e) => { const volume = Number(e.target.value) / 100; set((s) => { s.sound.volume = volume; }); }} />
+          <div className="bb-sound-previews" role="group" aria-label="Preview sounds">
+            <span>Take a listen</span>
+            <button className="bb-btn" type="button" data-testid="settings-preview-start"
+              aria-label="Preview start sound" onClick={() => playChime(settings.sound.volume, settings.sound.tone, 'start')}>
+              <span aria-hidden="true">↗</span> Start
+            </button>
+            <button className="bb-btn" type="button" data-testid="settings-preview-end"
+              aria-label="Preview end sound" onClick={() => playChime(settings.sound.volume, settings.sound.tone, 'end')}>
+              <span aria-hidden="true">↘</span> End
+            </button>
+          </div>
+        </div>
+        <label className={`bb-item ${settings.sound.enabled ? '' : 'is-disabled'}`}>
+          <span className="bb-setting-copy">End-of-break cue<small>Hear when time is up, without looking back.</small></span>
+          <Switch label="End-of-break cue" testId="settings-end-cue" checked={settings.sound.endCue}
+            disabled={!settings.sound.enabled} onChange={(v) => set((s) => { s.sound.endCue = v; })} />
         </label>
       </Group>
 

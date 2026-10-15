@@ -13,6 +13,7 @@ export function OverlayReminder({
   reducedMotion = false,
   onAction,
   manageFocus = true,
+  onTimerEnd,
 }: {
   kind: ReminderKind;
   title: string;
@@ -22,6 +23,8 @@ export function OverlayReminder({
   reducedMotion?: boolean;
   onAction: (action: CardAction) => void;
   manageFocus?: boolean;
+  /** Natural expiry only, never a manual Done, dismissal, or snooze. */
+  onTimerEnd?: () => void;
 }) {
   reducedMotion = useReducedMotion(reducedMotion);
   const { leaving, settle } = useSettleOnce(onAction, reducedMotion);
@@ -75,7 +78,9 @@ export function OverlayReminder({
           snoozeSec={snoozeSec}
           reducedMotion={reducedMotion}
           onAction={settle}
-          onExpire={() => settle(expiryActionFor(kind))}
+          onExpire={() => {
+            if (settle(expiryActionFor(kind))) onTimerEnd?.();
+          }}
         />
       </div>
     </div>

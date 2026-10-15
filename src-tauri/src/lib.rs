@@ -60,6 +60,8 @@ fn show_reminder(
     theme: String,
     chime: bool,
     volume: f64,
+    tone: String,
+    end_chime: bool,
     over_fullscreen: bool,
 ) -> Result<(), String> {
     let Some(win) = app.get_webview_window("reminder") else {
@@ -109,6 +111,8 @@ fn show_reminder(
             "theme": theme,
             "chime": chime,
             "volume": volume,
+            "tone": tone,
+            "endChime": end_chime,
         }),
     )
     .map_err(|e| e.to_string())?;
