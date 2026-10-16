@@ -217,7 +217,7 @@ pub fn run() {
                 MenuItem::with_id(app, "break-now", "Take a break now", true, None::<&str>)?;
             let pause = MenuItem::with_id(app, "pause", "Pause 15 min", true, None::<&str>)?;
             let menu = Menu::with_items(app, &[&open, &break_now, &pause, &quit])?;
-            TrayIconBuilder::new()
+            let mut tray = TrayIconBuilder::new()
                 .menu(&menu)
                 .tooltip("BlinkBreak — gentle health reminders")
                 .on_menu_event(|app, e| match e.id.as_ref() {
@@ -230,8 +230,11 @@ pub fn run() {
                         }
                     }
                     _ => {}
-                })
-                .build(app)?;
+                });
+            if let Some(icon) = app.default_window_icon() {
+                tray = tray.icon(icon.clone());
+            }
+            tray.build(app)?;
             Ok(())
         })
         .invoke_handler(tauri::generate_handler![
