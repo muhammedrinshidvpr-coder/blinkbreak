@@ -6,6 +6,9 @@ All notable changes to BlinkBreak are listed here. The format follows
 
 ## [Unreleased]
 
+### Fixed
+- Fixed duplicate system tray icons where one icon showed the logo without a menu and a second blank icon held the menu.
+
 ## [0.7.0] - 2026-10-15
 
 Gentle sounds that help you notice a reminder and know when a break is over.
